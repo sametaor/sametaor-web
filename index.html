@@ -1,66 +1,575 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <base href="https://sametaor.vercel.app" target="_blank">
-    <title>Sametaor's World</title>
-    <link rel="icon" target="popup" href="https://gravatar.com/userimage/193239741/55ec01d0b6fda99ad98d03ee00641930.jpeg?size=1080">
-    <link rel="stylesheet" type="text/css" href="styles.css"/>
-    <link rel="stylesheet" type="text/css" href="https://www.nerdfonts.com/assets/css/webfont.css"/>
-    <script type="text/javascript" src="/js/scripts.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sametaor's World</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+    /* ── Scroll-snap container ── */
+    #scroll-wrap {
+      height: 100vh;
+      overflow-y: scroll;
+      scroll-snap-type: y mandatory;
+      scroll-behavior: smooth;
+    }
+
+    section {
+      height: 100vh;
+      width: 100vw;
+      scroll-snap-align: start;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* ════════════════════════════
+       HERO SECTION
+    ════════════════════════════ */
+    #hero {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .sky {
+      position: absolute; inset: 0;
+      background: linear-gradient(to bottom,
+        #02040f 0%, #060d28 35%, #0e0620 60%, #060010 78%, #000 100%);
+      z-index: 0;
+    }
+
+    #starfield {
+      position: absolute; top:0; left:0;
+      width:100%; height:50%;
+      z-index:1; pointer-events:none;
+    }
+
+    .star {
+      position: absolute;
+      border-radius: 50%;
+      animation-name: starTwinkle;
+      animation-duration: var(--dur);
+      animation-timing-function: ease-in-out;
+      animation-delay: var(--delay);
+      animation-iteration-count: infinite;
+    }
+
+    @keyframes starTwinkle {
+      0%,100% { opacity:0.05; transform:scale(0.5); }
+      50%      { opacity:var(--peak); transform:scale(1); }
+    }
+
+    .horizon {
+      position: absolute; top:50%; left:0; right:0; height:2px;
+      background: linear-gradient(90deg, transparent, #ff00cc 30%, #00ffff 70%, transparent);
+      box-shadow: 0 0 14px #ff00cc, 0 0 28px #00ffff;
+      z-index:3;
+    }
+
+    .grid-wrap {
+      position: absolute; top:50%; left:-20%; right:-20%; height:55%;
+      z-index:2; perspective:280px; perspective-origin:50% 0%; overflow:hidden;
+    }
+
+    .grid {
+      width:100%; height:200%;
+      transform: rotateX(72deg); transform-origin: top center;
+      background-image:
+        linear-gradient(rgba(160,0,255,0.5) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(160,0,255,0.5) 1px, transparent 1px);
+      background-size: 60px 60px;
+      animation: gridScroll 1s linear infinite;
+    }
+
+    @keyframes gridScroll {
+      from { background-position: 0 0; }
+      to   { background-position: 0 60px; }
+    }
+
+    .scanlines {
+      position: absolute; top:50%; left:0; right:0; height:50%;
+      z-index:6; pointer-events:none;
+      background: repeating-linear-gradient(
+        to bottom, transparent 0px, transparent 2px,
+        rgba(0,0,0,0.55) 2px, rgba(0,0,0,0.55) 4px);
+    }
+
+    .scanlines::after {
+      content:''; position:absolute; left:0; right:0; height:60px;
+      background: linear-gradient(to bottom, transparent 0%,
+        rgba(255,0,200,0.09) 40%, rgba(255,0,200,0.20) 50%,
+        rgba(255,0,200,0.09) 60%, transparent 100%);
+      animation: scanBand 3.5s linear infinite;
+    }
+
+    @keyframes scanBand {
+      from { top:-60px; } to { top:100%; }
+    }
+
+    .content {
+      position:relative; z-index:10;
+      display:flex; flex-direction:column;
+      align-items:center; gap:10px;
+    }
+
+    .content img.logo {
+      width:323px; height:323px; object-fit:contain;
+      animation: logoPulse 4s ease-in-out infinite;
+    }
+
+    @keyframes logoPulse {
+      0%,100% { filter: drop-shadow(0 0 20px rgba(255,0,200,0.8)) drop-shadow(0 0 50px rgba(255,0,200,0.35)); }
+      50%      { filter: drop-shadow(0 0 36px rgba(255,0,200,1))   drop-shadow(0 0 80px rgba(120,0,255,0.6)); }
+    }
+
+    h1 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 106px; font-weight:500; letter-spacing:0.12em; color:#f5f000;
+      text-shadow: 0 0 8px #f5f000, 0 0 20px #f0c000,
+        0 0 50px rgba(240,160,0,0.65), 0 0 90px rgba(240,120,0,0.3);
+    }
+
+    .scroll-icons {
+      display:flex; flex-direction:column; align-items:center; gap:4px; margin-top:4px;
+    }
+
+    .scroll-arrow { animation: bounceDown 1.5s ease-in-out infinite; }
+
+    @keyframes bounceDown {
+      0%,100% { transform:translateY(0); opacity:1; }
+      50%      { transform:translateY(10px); opacity:0.5; }
+    }
+
+    /* ════════════════════════════
+       SOLAR SYSTEM SECTION
+    ════════════════════════════ */
+    #solar-system { background:#000; }
+
+    #solar-canvas { display:block; width:100%; height:100%; }
+  </style>
 </head>
 <body>
-    <div class="topnav" id="myTopnav">
-        <a href="index.html" target="_self" class="active"><i class="nf nf-fa-home"></i> Home</a>
-        <a href="bio/bio.html" target="_self"><i class="nf nf-fa-book"></i> Biography</a>
-        <a href="projects/projects.html" target="_self"><i class="nf nf-oct-project_roadmap"></i> Projects</a>
-        <div class="dropdown">
-            <button class="dropbtn"><i class="nf nf-md-tennis_ball"></i> Hobbies <i class="nf nf-fa-caret_down"></i>
-            </button>
-            <div class="dropdown-content">
-              <a href="hobbies/hobbies.html" target="_self"><i class="nf nf-md-cricket"></i> My Hobbies</a>
-              <a href="hobbies/gaming/gaming.html" target="_self"><i class="nf nf-md-gamepad_variant"></i> Gaming</a>
-              <a href="hobbies/tech/tech.html" target="_self"><i class="nf nf-md-monitor_dashboard"></i> Tech</a>
-              <a href="hobbies/music/music.html" target="_self"><i class="nf nf-fa-music"></i> Music</a>
-            </div>
-          </div>
-        <div class="dropdown">
-          <button class="dropbtn"><i class="nf nf-oct-people"></i> Socials <i class="nf nf-fa-caret_down"></i>
-          </button>
-          <div class="dropdown-content">
-            <a href="socials/socials.html" target="_self"><i class="nf nf-md-crowd"></i> My Socials</a>
-            <a href="socials/youtube.html" target="_self"><i class="nf nf-md-youtube"></i> Youtube</a>
-            <a href="socials/twitterx.html" target="_self"><i class="nf nf-fa-twitter"></i> Twitter(X)</a>
-            <a href="socials/twitch.html" target="_self"><i class="nf nf-fa-twitch"></i> Twitch</a>
-          </div>
-        </div>
-        <a href="javascript:void(0);" class="icon" target="_self" onclick="myFunction()">&#9776;</a>
+
+<div id="scroll-wrap">
+
+  <!-- ═══ SECTION 1: Hero ═══ -->
+  <section id="hero">
+    <div class="sky"></div>
+    <div id="starfield"></div>
+    <div class="horizon"></div>
+    <div class="grid-wrap"><div class="grid"></div></div>
+    <div class="scanlines"></div>
+    <div class="content">
+      <img class="logo" src="Logo_Vaporwave.svg" alt="Sametaor Logo">
+      <h1>SAMETAOR</h1>
+      <div class="scroll-icons">
+        <img src="Scroll_Down_Hex.svg" alt="" width="50">
+        <img src="Scroll_Down_Triangle.svg" alt="" width="20" class="scroll-arrow">
+      </div>
     </div>
-    <br>
-    <br>
-    <br>
-    <center><img title="The McLaren 720s" class="avatar" src="https://gravatar.com/userimage/193239741/55ec01d0b6fda99ad98d03ee00641930.jpeg?size=1080"></center>
-    <center><h1 class="heading">Sametaor's World</h1></center>
-    <!--<hr style="width:75%;border-radius:100%;border:2.5px solid rgb(12, 165, 220)">-->
-    <center><i class="nf nf-md-drag_horizontal_variant"></i><i class="nf nf-md-drag_horizontal_variant"></i><i class="nf nf-md-drag_horizontal_variant"></i><i class="nf nf-md-hexagon_slice_6"></i><i class="nf nf-md-drag_horizontal_variant"></i><i class="nf nf-md-drag_horizontal_variant"></i><i class="nf nf-md-drag_horizontal_variant"></i></center>
-    <center><h3>Welcome to my website!</h3></center>
-    <center><p class="mainContent">Lorem ipsum dolor sit amet consectetur adipisicing elit. Maiores perferendis corrupti deserunt rem, inventore quibusdam aut dignissimos expedita soluta itaque, temporibus necessitatibus amet. Totam iste tempore temporibus at quidem veritatis!</p></center>
-    <center><h3>Who I am</h3></center>
-    <center><h3>What I do</h3></center>
-    <center><h3>Areas of Interests</h3></center>
-    <center><h3>Skills</h3></center>
-    <center><h3>My Journey on the Internet</h3></center>
-    <div class="socials"><center><a target="popup" type="button" href="https://youtube.com/@sametaor"><button class="ytbtn"><img height=45px src="https://img.icons8.com/3d-fluency/100/youtube-play.png"/></button></a>
-    <a target="popup" type="button" href="https://steamcommunity.com/id/sametaor"><button class="stmbtn"><img height="45px" src="https://img.icons8.com/3d-fluency/100/steam-circled.png"/></button></a>
-    <a target="popup" type="button" href="https://soundcloud.com/sametaor"><button class="sndbtn"><img height="45px" src="https://img.icons8.com/3d-fluency/100/soundcloud.png"/></button></a>
-    <a target="popup" type="button" href="https://twitter.com/sametaor"><button class="xbtn"><img height="45px" src="https://img.icons8.com/3d-fluency/100/twitter-circled.png"/></button></a>
-    <a target="popup" type="button" href="https://twitch.tv/sametaor"><button class="twitchbtn"><img height="45px" src="https://img.icons8.com/3d-fluency/100/twitch.png"/></button></a>
-    <a target="popup" type="button" href="https://github.com/sametaor"><button class="ghbtn"><img height="45px" src="https://img.icons8.com/3d-fluency/100/github.png"/></button></a>
-    <a target="popup" type="button" href="https://reddit.com/user/sametaor"><button class="redditbtn"><img height="45px" src="https://img.icons8.com/3d-fluency/100/reddit.png"/></button></a>
-    <a target="popup" type="button" href="https://open.spotify.com/user/zc72jfyu61f2weqylj85pc5er?si=eebc2f05abb44a67"><button class="spotbtn"><img height="45px" src="https://img.icons8.com/3d-fluency/100/spotify.png"/></button></a>
-    <a target="popup" type="button" href="https://www.gog.com/u/sametaor"><button class="gogbtn"><img height="45px" src="https://img.icons8.com/fluency/100/gog-galaxy--v2.png"/></button></a>
-    <a target="popup" type="button" href="https://stackoverflow.com/users/16008830/sametaor"><button class="stackobtn"><img height="45px" src="https://img.icons8.com/fluency/100/stackoverflow.png"/></button></a>
-    <a target="popup" type="button" href="https://stackexchange.com/users/21694727/sametaor"><button class="stackxbtn"><img height="45px" src="https://img.icons8.com/fluency/100/stackexchange.png"/></button></a></div>
+  </section>
+
+  <!-- ═══ SECTION 2: Solar System ═══ -->
+  <section id="solar-system">
+    <canvas id="solar-canvas"></canvas>
+  </section>
+
+</div>
+
+<script>
+/* ═══════════════════════════════════════
+   HERO: Starfield
+═══════════════════════════════════════ */
+(function() {
+  const field  = document.getElementById('starfield');
+  const colors = ['#00ffff','#ff88ff','#ffffff','#ccaaff','#88eeff','#ffffff','#ffffff'];
+  for (let i = 0; i < 300; i++) {
+    const el = document.createElement('div');
+    el.className = 'star';
+    const rand = Math.random();
+    const size = rand < 0.65 ? 0.8 + Math.random()*1.2
+               : rand < 0.88 ? 2   + Math.random()*1.5
+               :               3.5 + Math.random()*2;
+    const col  = colors[Math.floor(Math.random()*colors.length)];
+    const dur  = (2.5 + Math.random()*6).toFixed(2)+'s';
+    const del  = '-'+(Math.random()*8).toFixed(2)+'s';
+    const peak = rand < 0.65 ? (0.15+Math.random()*0.25).toFixed(2)
+               : rand < 0.88 ? (0.40+Math.random()*0.30).toFixed(2)
+               :               (0.75+Math.random()*0.25).toFixed(2);
+    const bias = Math.random();
+    const top  = bias < 0.28 ? 25+Math.random()*35 : Math.random()*100;
+    el.style.cssText = `left:${Math.random()*100}%;top:${top}%;width:${size}px;height:${size}px;`+
+      `background:${col};box-shadow:0 0 ${(size*2).toFixed(1)}px ${col},0 0 ${(size*5).toFixed(1)}px ${col}44;`+
+      `--dur:${dur};--delay:${del};--peak:${peak};`;
+    field.appendChild(el);
+  }
+})();
+
+/* ═══════════════════════════════════════
+   SOLAR SYSTEM CANVAS
+═══════════════════════════════════════ */
+(function() {
+  const canvas = document.getElementById('solar-canvas');
+  const ctx    = canvas.getContext('2d');
+  const τ      = Math.PI * 2;
+  const rng    = (a,b) => a + Math.random()*(b-a);
+
+  function resize() {
+    const s = document.getElementById('solar-system');
+    canvas.width  = s.clientWidth  || window.innerWidth;
+    canvas.height = s.clientHeight || window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  const sunImg = new Image();
+  sunImg.src = 'Logo_Vaporwave.svg';
+
+  /* ── Planet data (ecc = real eccentricity, ang0 = random start angle = perihelion dir) ── */
+  const PLANETS = [
+    { name:'MERCURY', label:true,  r:3.5,  orbR:80,  period:3,   ecc:0.206, ang0:rng(0,τ), color:'#c0b8e0', glow:'192,184,224', moons:[] },
+    { name:'VENUS',   label:true,  r:5.5,  orbR:115, period:7,   ecc:0.007, ang0:rng(0,τ), color:'#ffdd66', glow:'255,221,102', moons:[] },
+    { name:'EARTH',   label:true,  r:6,    orbR:155, period:10,  ecc:0.017, ang0:rng(0,τ), color:'#44aaff', glow:'68,170,255',
+      moons:[ {r:2,   orbR:15, period:0.9,  ecc:0.055,    ang0:rng(0,τ), color:'#aaaacc'} ] },
+    { name:'MARS',    label:true,  r:4.5,  orbR:200, period:19,  ecc:0.093, ang0:rng(0,τ), color:'#ff5566', glow:'255,85,102',
+      moons:[ {r:1.2, orbR:8,  period:0.3,  ecc:0.015,    ang0:rng(0,τ), color:'#cc8877'},
+              {r:0.9, orbR:12, period:0.7,  ecc:0.0002,   ang0:rng(0,τ), color:'#cc9988'} ] },
+    { name:'JUPITER', label:true, r:15,   orbR:310, period:40,  ecc:0.049, ang0:rng(0,τ), color:'#cc88ff', glow:'204,136,255', bands:true,
+      moons:[ {r:2.5, orbR:22, period:0.8,  ecc:0.004,    ang0:rng(0,τ), color:'#ffaa44'},
+              {r:2,   orbR:28, period:1.5,  ecc:0.009,    ang0:rng(0,τ), color:'#ccddff'},
+              {r:3,   orbR:36, period:2.5,  ecc:0.001,    ang0:rng(0,τ), color:'#ffeeaa'},
+              {r:2.5, orbR:44, period:4.2,  ecc:0.007,    ang0:rng(0,τ), color:'#bbbbcc'} ] },
+    { name:'SATURN',  label:true, r:12,   orbR:385, period:70,  ecc:0.057, ang0:rng(0,τ), color:'#ffcc88', glow:'255,204,136', rings:true,
+      moons:[ {r:2.5, orbR:25, period:2,    ecc:0.029,    ang0:rng(0,τ), color:'#ffddaa'},
+              {r:1.2, orbR:18, period:1,    ecc:0.0045,   ang0:rng(0,τ), color:'#eeeeff'} ] },
+    { name:'URANUS',  label:true, r:9,    orbR:450, period:110, ecc:0.046, ang0:rng(0,τ), color:'#44ffee', glow:'68,255,238', thinRings:true,
+      moons:[ {r:1.5, orbR:15, period:1.5,  ecc:0.001,    ang0:rng(0,τ), color:'#aaeedd'},
+              {r:1.5, orbR:19, period:2.2,  ecc:0.001,    ang0:rng(0,τ), color:'#99ddcc'} ] },
+    { name:'NEPTUNE', label:true, r:8,    orbR:490, period:160, ecc:0.010, ang0:rng(0,τ), color:'#4466ff', glow:'68,102,255',
+      moons:[ {r:2,   orbR:14, period:1.5,  ecc:0.000016, ang0:rng(0,τ), color:'#88aaff'} ] },
+  ];
+
+  const DWARFS = [
+    { name:'CERES', r:2.5, orbR:252, period:28,  ecc:0.076, ang0:rng(0,τ), color:'#998877' },
+    { name:'PLUTO', r:2,   orbR:535, period:200, ecc:0.249, ang0:rng(0,τ), color:'#cc99aa' },
+    { name:'ERIS', r:1.8, orbR:555, period:220, ecc:0.436, ang0:rng(0,τ), color:'#ddccbb' },
+    { name:'MAKEMAKE', r:1.6, orbR:545, period:210, ecc:0.159, ang0:rng(0,τ), color:'#ddbb99' },
+    { name:'HAUMEA', r:1.5, orbR:525, period:195, ecc:0.191, ang0:rng(0,τ), color:'#ffeecc' },
+  ];
+
+  /* Two comets: Halley-style + shorter period */
+  const COMETS = [
+    { semiMajor:340, ecc:0.967, period:90, ang0:Math.PI*0.7,  tilt:0.12,  color:'#aaeeff' },
+    { semiMajor:190, ecc:0.85,  period:45, ang0:Math.PI*1.42, tilt:-0.22, color:'#ccffdd' },
+  ];
+
+  /* Belts */
+  const AB_C  = ['rgba(180,130,80,0.7)','rgba(160,155,120,0.65)','rgba(130,110,85,0.7)'];
+  const KB_C  = ['rgba(100,190,210,0.5)','rgba(180,110,210,0.45)','rgba(210,210,255,0.45)'];
+
+  const asteroids = Array.from({length:500}, () => ({
+    ang0:rng(0,τ), r:rng(210,262), size:rng(0.4,2.0),
+    speed:rng(0.0012,0.0020), color:AB_C[Math.floor(Math.random()*AB_C.length)]
+  }));
+
+  const kuiper = Array.from({length:700}, () => ({
+    ang0:rng(0,τ), r:rng(520,568), size:rng(0.3,1.1),
+    speed:rng(0.00010,0.00025), color:KB_C[Math.floor(Math.random()*KB_C.length)]
+  }));
+
+  /* Static background stars for solar section */
+  const bgStars = Array.from({length:450}, () => ({
+    x:Math.random(), y:Math.random(), r:rng(0.3,1.8), a:rng(0.08,0.65),
+    col:['#ffffff','#ccddff','#ffccee','#ccffff'][Math.floor(Math.random()*4)]
+  }));
+
+  /* ── Kepler's equation solver (Newton-Raphson) ── */
+  function kepler(M, e) {
+    let E = M;
+    for (let i=0; i<10; i++) E -= (E - e*Math.sin(E) - M) / (1 - e*Math.cos(E));
+    return E;
+  }
+
+  /* ── Position on Keplerian orbit at time t ── */
+  function orbPos(focX, focY, orbR, period, ecc, ang0, t, os) {
+    const M  = ((τ*t/period % τ) + τ) % τ;
+    const E  = kepler(M, ecc);
+    const nu = 2*Math.atan2(Math.sqrt(1+ecc)*Math.sin(E/2), Math.sqrt(1-ecc)*Math.cos(E/2));
+    const r  = orbR * (1 - ecc*Math.cos(E));
+    const a  = nu + ang0;
+    return { x: focX + r*os*Math.cos(a), y: focY + r*os*Math.sin(a) };
+  }
+
+  /* ── Ellipse center for orbital path drawing ──
+     Sun is at one focus; center is offset by a*e opposite perihelion */
+  function ellipseCenter(focX, focY, orbR, ecc, ang0, os) {
+    const ae = orbR * ecc * os;
+    return { x: focX - ae*Math.cos(ang0), y: focY - ae*Math.sin(ang0) };
+  }
+
+  /* ── Futuristic label with pointer line ── */
+  function drawLabel(px, py, name, cx, cy, pr) {
+    const neon = '#f5f000';
+    const dx = px-cx, dy = py-cy;
+    const ang  = Math.atan2(dy, dx);
+    const goR  = dx >= 0;
+
+    const sx = px + Math.cos(ang)*(pr+6);
+    const sy = py + Math.sin(ang)*(pr+6);
+    const mx = sx + Math.cos(ang)*48;
+    const my = sy + Math.sin(ang)*48;
+    const ex = mx + (goR ? 44 : -44);
+    const ey = my;
+
+    ctx.save();
+    ctx.strokeStyle = neon; ctx.lineWidth = 1.5;
+    ctx.shadowColor = neon; ctx.shadowBlur = 8;
+
+    /* Diagonal + horizontal line */
+    ctx.beginPath();
+    ctx.moveTo(sx,sy); ctx.lineTo(mx,my); ctx.lineTo(ex,ey);
+    ctx.stroke();
+
+    /* Bracket tick */
+    ctx.beginPath();
+    ctx.moveTo(ex, ey-8); ctx.lineTo(ex, ey+8);
+    ctx.stroke();
+    ctx.shadowBlur = 0; ctx.restore();
+
+    /* Dot at start */
+    ctx.save();
+    ctx.fillStyle = neon; ctx.shadowColor = neon; ctx.shadowBlur = 10;
+    ctx.beginPath(); ctx.arc(sx,sy,3,0,τ); ctx.fill();
+    ctx.restore();
+
+    /* Small coloured planet dot on line start */
+    ctx.save();
+    ctx.font = '700 12px "Orbitron", monospace';
+    ctx.fillStyle = neon; ctx.shadowColor = neon; ctx.shadowBlur = 10;
+    ctx.textAlign = goR ? 'left' : 'right';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(name, ex+(goR?6:-6), ey-4);
+    ctx.restore();
+  }
+
+  /* ── Saturn's rings ── */
+  function drawSaturnRings(px, py, pr) {
+    ctx.save(); ctx.globalAlpha = 0.55;
+    const g = ctx.createLinearGradient(px-pr*3,py, px+pr*3,py);
+    g.addColorStop(0,   'transparent');
+    g.addColorStop(0.08,'rgba(255,200,100,0.45)');
+    g.addColorStop(0.30,'rgba(255,230,140,0.65)');
+    g.addColorStop(0.47,'rgba(200,160,60,0.15)');
+    g.addColorStop(0.53,'rgba(200,160,60,0.15)');
+    g.addColorStop(0.70,'rgba(255,230,140,0.65)');
+    g.addColorStop(0.92,'rgba(255,200,100,0.45)');
+    g.addColorStop(1,   'transparent');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.ellipse(px,py,pr*3,pr*0.65,0,0,τ); ctx.fill();
+    ctx.globalAlpha = 0.35;
+    ctx.fillStyle = 'rgba(180,130,50,0.5)';
+    ctx.beginPath(); ctx.ellipse(px,py,pr*2,pr*0.45,0,0,τ); ctx.fill();
+    ctx.restore();
+  }
+
+  /* ── Uranus thin rings ── */
+  function drawUranusRings(px, py, pr) {
+    ctx.save();
+    ctx.strokeStyle = 'rgba(68,255,238,0.35)'; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.ellipse(px,py,pr*2.4,pr*0.5,0,0,τ); ctx.stroke();
+    ctx.strokeStyle = 'rgba(68,255,238,0.18)';
+    ctx.beginPath(); ctx.ellipse(px,py,pr*2.9,pr*0.62,0,0,τ); ctx.stroke();
+    ctx.restore();
+  }
+
+  /* ── Jupiter cloud bands + GRS ── */
+  function drawJupiterBands(px, py, pr) {
+    ctx.save();
+    ctx.beginPath(); ctx.arc(px,py,pr,0,τ); ctx.clip();
+    ctx.fillStyle = '#cc88ff';
+    ctx.fillRect(px-pr, py-pr, pr*2, pr*2);
+    const bands = [
+      {yo:-0.75,h:0.22,c:'rgba(255,150,70,0.55)'},
+      {yo:-0.38,h:0.16,c:'rgba(190,80,255,0.45)'},
+      {yo:-0.05,h:0.22,c:'rgba(255,200,90,0.4)'},
+      {yo: 0.28,h:0.18,c:'rgba(160,70,240,0.5)'},
+      {yo: 0.58,h:0.24,c:'rgba(255,130,50,0.45)'},
+    ];
+    bands.forEach(b => {
+      ctx.fillStyle = b.c;
+      ctx.fillRect(px-pr, py+b.yo*pr, pr*2, b.h*pr);
+    });
+    /* Great Red Spot */
+    ctx.fillStyle = 'rgba(255,80,80,0.55)';
+    ctx.beginPath(); ctx.ellipse(px+pr*0.28, py+pr*0.1, pr*0.28, pr*0.16, 0, 0, τ); ctx.fill();
+    ctx.restore();
+  }
+
+  /* ═══════════════════════
+     MAIN ANIMATION LOOP
+  ═══════════════════════ */
+  let t0 = null;
+
+  function draw(ts) {
+    if (!t0) t0 = ts;
+    const t  = (ts - t0) / 1000;
+    const W  = canvas.width, H = canvas.height;
+    const cx = W/2, cy = H/2;
+    /* orbit scale: fit everything in 92% of half the smaller dimension */
+    const os = Math.min(W,H) / 2 / 545 * 0.92;
+
+    ctx.clearRect(0,0,W,H);
+
+    /* Background */
+    ctx.fillStyle = '#00000c'; ctx.fillRect(0,0,W,H);
+
+    /* Nebula blobs */
+    [[cx*0.45,cy*0.65,W*0.28,'rgba(90,0,140,0.07)'],[cx*1.55,cy*1.4,W*0.22,'rgba(0,90,130,0.06)'],
+     [cx*0.2, cy*1.6, W*0.18,'rgba(0,140,100,0.04)']].forEach(([nx,ny,nr,nc])=>{
+      const nb = ctx.createRadialGradient(nx,ny,0,nx,ny,nr);
+      nb.addColorStop(0,nc); nb.addColorStop(1,'transparent');
+      ctx.fillStyle=nb; ctx.fillRect(0,0,W,H);
+    });
+
+    /* Background stars */
+    bgStars.forEach(s => {
+      ctx.globalAlpha = s.a; ctx.fillStyle = s.col;
+      ctx.beginPath(); ctx.arc(s.x*W, s.y*H, s.r, 0, τ); ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+
+    /* ── Orbital paths (correctly-centred ellipses, dashed cyan) ── */
+    ctx.save(); ctx.setLineDash([9,8]); ctx.lineWidth = 1;
+    PLANETS.forEach(p => {
+      const a  = p.orbR*os, b = a*Math.sqrt(1-p.ecc*p.ecc);
+      const ec = ellipseCenter(cx,cy,p.orbR,p.ecc,p.ang0,os);
+      ctx.strokeStyle = 'rgba(0,220,220,0.22)';
+      ctx.beginPath(); ctx.ellipse(ec.x,ec.y,a,b,p.ang0,0,τ); ctx.stroke();
+    });
+    DWARFS.forEach(d => {
+      const a  = d.orbR*os, b = a*Math.sqrt(1-d.ecc*d.ecc);
+      const ec = ellipseCenter(cx,cy,d.orbR,d.ecc,d.ang0,os);
+      ctx.strokeStyle = 'rgba(0,170,170,0.10)';
+      ctx.beginPath(); ctx.ellipse(ec.x,ec.y,a,b,d.ang0,0,τ); ctx.stroke();
+    });
+    ctx.setLineDash([]); ctx.restore();
+
+    /* ── Asteroid belt ── */
+    asteroids.forEach(a => {
+      const ang = a.ang0 + t*a.speed;
+      ctx.fillStyle = a.color;
+      ctx.beginPath(); ctx.arc(cx+a.r*os*Math.cos(ang), cy+a.r*os*Math.sin(ang), a.size, 0, τ); ctx.fill();
+    });
+
+    /* ── Kuiper belt ── */
+    kuiper.forEach(k => {
+      const ang = k.ang0 + t*k.speed;
+      ctx.fillStyle = k.color;
+      ctx.beginPath(); ctx.arc(cx+k.r*os*Math.cos(ang), cy+k.r*os*Math.sin(ang), k.size, 0, τ); ctx.fill();
+    });
+
+    /* ── Sun (logo) ── */
+    const sunR = 36*os;
+    const sg = ctx.createRadialGradient(cx,cy,sunR*0.5,cx,cy,sunR*3.5);
+    sg.addColorStop(0,'rgba(255,80,200,0.35)'); sg.addColorStop(0.4,'rgba(200,0,255,0.12)'); sg.addColorStop(1,'transparent');
+    ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(cx,cy,sunR*3.5,0,τ); ctx.fill();
+    if (sunImg.complete && sunImg.naturalWidth>0) {
+      ctx.drawImage(sunImg, cx-sunR, cy-sunR, sunR*2, sunR*2);
+    } else {
+      ctx.fillStyle='#ff00cc'; ctx.beginPath(); ctx.arc(cx,cy,sunR,0,τ); ctx.fill();
+    }
+
+    /* ── Dwarf planets ── */
+    DWARFS.forEach(d => {
+      const pos = orbPos(cx,cy,d.orbR,d.period,d.ecc,d.ang0,t,os);
+      ctx.save(); ctx.fillStyle=d.color; ctx.shadowColor=d.color; ctx.shadowBlur=5;
+      ctx.beginPath(); ctx.arc(pos.x,pos.y,Math.max(1,d.r*os),0,τ); ctx.fill(); ctx.restore();
+    });
+
+    /* ── Comets ── */
+    COMETS.forEach(c => {
+      const M  = ((τ*t/c.period%τ)+τ)%τ;
+      const E  = kepler(M,c.ecc);
+      const nu = 2*Math.atan2(Math.sqrt(1+c.ecc)*Math.sin(E/2),Math.sqrt(1-c.ecc)*Math.cos(E/2));
+      const r  = c.semiMajor*(1-c.ecc*Math.cos(E));
+      const a  = nu+c.ang0;
+      const px = cx+r*os*Math.cos(a);
+      const py = cy+r*os*Math.sin(a)*Math.cos(c.tilt);
+      if (px<-60||px>W+60||py<-60||py>H+60) return;
+
+      const tailDir = Math.atan2(py-cy,px-cx);
+      const close   = Math.max(0, 1-r/(c.semiMajor*1.05));
+      const tlen    = (55+close*130)*os;
+      const tx = px+Math.cos(tailDir)*tlen, ty = py+Math.sin(tailDir)*tlen;
+
+      ctx.save();
+      const tg = ctx.createLinearGradient(px,py,tx,ty);
+      tg.addColorStop(0,c.color+'bb'); tg.addColorStop(1,c.color+'00');
+      ctx.strokeStyle=tg; ctx.lineWidth=Math.max(1,1.8*os);
+      ctx.shadowColor=c.color; ctx.shadowBlur=8;
+      ctx.beginPath(); ctx.moveTo(px,py); ctx.lineTo(tx,ty); ctx.stroke();
+      ctx.fillStyle='#ffffff'; ctx.shadowBlur=14;
+      ctx.beginPath(); ctx.arc(px,py,Math.max(1.5,2.5*os),0,τ); ctx.fill();
+      ctx.restore();
+    });
+
+    /* ── Planets ── */
+    PLANETS.forEach(p => {
+      const pos = orbPos(cx,cy,p.orbR,p.period,p.ecc,p.ang0,t,os);
+      const pr  = Math.max(2.5, p.r*os);
+
+      /* Saturn rings behind planet */
+      if (p.rings && !p.thinRings) drawSaturnRings(pos.x, pos.y, pr);
+
+      /* Moons */
+      p.moons.forEach(m => {
+        const mpos = orbPos(pos.x,pos.y,m.orbR,m.period,m.ecc,m.ang0,t,os);
+        ctx.globalAlpha=0.85; ctx.fillStyle=m.color;
+        ctx.beginPath(); ctx.arc(mpos.x,mpos.y,Math.max(0.7,m.r*os),0,τ); ctx.fill();
+        ctx.globalAlpha=1;
+      });
+
+      /* Planet glow */
+      if (p.glow) {
+        const gl = ctx.createRadialGradient(pos.x,pos.y,0,pos.x,pos.y,pr*2.8);
+        gl.addColorStop(0,`rgba(${p.glow},0.4)`); gl.addColorStop(1,'transparent');
+        ctx.fillStyle=gl; ctx.beginPath(); ctx.arc(pos.x,pos.y,pr*2.8,0,τ); ctx.fill();
+      }
+
+      /* Planet body */
+      if (p.bands) {
+        drawJupiterBands(pos.x,pos.y,pr);
+      } else {
+        ctx.fillStyle=p.color; ctx.shadowColor=p.color; ctx.shadowBlur=4;
+        ctx.beginPath(); ctx.arc(pos.x,pos.y,pr,0,τ); ctx.fill();
+        ctx.shadowBlur=0;
+      }
+
+      /* Uranus rings in front */
+      if (p.thinRings) drawUranusRings(pos.x,pos.y,pr);
+
+      /* Labels: inner 4 only */
+      if (p.label) drawLabel(pos.x,pos.y,p.name,cx,cy,pr);
+    });
+
+    /* Section watermark */
+    ctx.save();
+    ctx.font='500 13px "Orbitron",monospace';
+    ctx.fillStyle='rgba(0,220,220,0.35)';
+    ctx.textAlign='left'; ctx.textBaseline='top';
+    ctx.fillText('WHERE SHALL WE GO?',20,18);
+    ctx.restore();
+
+    requestAnimationFrame(draw);
+  }
+
+  requestAnimationFrame(draw);
+})();
+</script>
+
 </body>
 </html>

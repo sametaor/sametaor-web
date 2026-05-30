@@ -363,6 +363,19 @@ function ellCtr(fx,fy,oR,ec,a0,os){
   const ae=oR*ec*os;return{x:fx-ae*Math.cos(a0),y:fy-ae*Math.sin(a0)};
 }
 
+/* ── Axial rotation ── */
+function rotateAxisAndDraw(px,py,planet,t,fn){
+  const rotAngle=(t/planet.rotPeriod)*τ;
+  const tilt=planet.tilt||0;
+  ctx.save();
+  ctx.translate(px,py);
+  ctx.rotate(tilt);
+  ctx.rotate(rotAngle);
+  ctx.translate(-px,-py);
+  fn();
+  ctx.restore();
+}
+
 /* ════════════════════════════
    MOON FACTORY
 ════════════════════════════ */
@@ -372,15 +385,15 @@ function M(n,r,o,p,e,c){return{name:n,r,orbR:o,period:p,ecc:e,ang0:rng(0,τ),col
    PLANETS (with ALL named moons)
 ════════════════════════════ */
 const PLANETS=[
-{name:'MERCURY',r:3.5,orbR:80, period:3,  ecc:.206,ang0:rng(0,τ),color:'#c0b8e0',glow:'192,184,224',ls:null,moons:[]},
-{name:'VENUS',  r:5.5,orbR:115,period:7,  ecc:.007,ang0:rng(0,τ),color:'#f5df88',glow:'245,223,136',ls:null,moons:[]},
-{name:'EARTH',  r:6,  orbR:155,period:10, ecc:.017,ang0:rng(0,τ),color:'#44aaff',glow:'68,170,255', ls:null,
+{name:'MERCURY',r:3.5,orbR:80, period:3,  ecc:.206,ang0:rng(0,τ),color:'#c0b8e0',glow:'192,184,224',rotPeriod:58.646,tilt:0.0349,ls:null,moons:[]},
+{name:'VENUS',  r:5.5,orbR:115,period:7,  ecc:.007,ang0:rng(0,τ),color:'#f5df88',glow:'245,223,136',rotPeriod:243.025,tilt:3.0948,ls:null,moons:[]},
+{name:'EARTH',  r:6,  orbR:155,period:10, ecc:.017,ang0:rng(0,τ),color:'#44aaff',glow:'68,170,255',rotPeriod:1.0,tilt:0.4091,ls:null,
   moons:[M('LUNA',2,14,.9,.055,'#aaaacc')]},
-{name:'MARS',   r:4.5,orbR:200,period:19, ecc:.093,ang0:rng(0,τ),color:'#c8461a',glow:'200,70,26',  ls:null,
+{name:'MARS',   r:4.5,orbR:200,period:19, ecc:.093,ang0:rng(0,τ),color:'#c8461a',glow:'200,70,26',rotPeriod:1.0257,tilt:0.4396,ls:null,
   moons:[M('PHOBOS',1.2,8,.24,.015,'#cc8877'),M('DEIMOS',.9,13,.6,.0002,'#cc9988')]},
 
 /* ── JUPITER – 53 named moons ── */
-{name:'JUPITER',r:15,orbR:310,period:40,ecc:.049,ang0:rng(0,τ),color:'#cc88ff',glow:'204,136,255',ls:null,
+{name:'JUPITER',r:15,orbR:310,period:40,ecc:.049,ang0:rng(0,τ),color:'#cc88ff',glow:'204,136,255',rotPeriod:0.4167,tilt:0.0546,ls:null,
   moons:[
   /* Inner group */
   M('METIS',.5,10,.19,.001,'#aa9988'),M('ADRASTEA',.4,11,.20,.002,'#998877'),
@@ -419,7 +432,7 @@ const PLANETS=[
 ]},
 
 /* ── SATURN – 50 named moons ── */
-{name:'SATURN',r:12,orbR:385,period:70,ecc:.057,ang0:rng(0,τ),color:'#ffcc88',glow:'255,204,136',ls:null,rings:true,
+{name:'SATURN',r:12,orbR:385,period:70,ecc:.057,ang0:rng(0,τ),color:'#ffcc88',glow:'255,204,136',rotPeriod:0.4375,tilt:0.4662,ls:null,rings:true,
   moons:[
   /* Ring shepherds & inner */
   M('PAN',.5,25,.54,.000,'#ccbbaa'),M('DAPHNIS',.4,26,.58,.000,'#bbaa99'),
@@ -455,7 +468,7 @@ const PLANETS=[
 ]},
 
 /* ── URANUS – 27 named moons ── */
-{name:'URANUS',r:9,orbR:450,period:110,ecc:.046,ang0:rng(0,τ),color:'#44ffee',glow:'68,255,238',ls:null,thinRings:true,
+{name:'URANUS',r:9,orbR:450,period:110,ecc:.046,ang0:rng(0,τ),color:'#44ffee',glow:'68,255,238',rotPeriod:0.708,tilt:1.7049,ls:null,thinRings:true,
   moons:[
   /* Inner small */
   M('CORDELIA',.4,6,.3,.000,'#99bbbb'),M('OPHELIA',.4,7,.35,.010,'#88aaaa'),
@@ -478,7 +491,7 @@ const PLANETS=[
 ]},
 
 /* ── NEPTUNE – 14 named moons ── */
-{name:'NEPTUNE',r:8,orbR:490,period:160,ecc:.010,ang0:rng(0,τ),color:'#4466ff',glow:'68,102,255',ls:null,
+{name:'NEPTUNE',r:8,orbR:490,period:160,ecc:.010,ang0:rng(0,τ),color:'#4466ff',glow:'68,102,255',rotPeriod:0.667,tilt:0.4941,ls:null,
   moons:[
   M('NAIAD',.5,7,.28,.000,'#8899cc'),M('THALASSA',.5,8,.32,.000,'#99aadd'),
   M('DESPINA',.6,10,.40,.000,'#aabbee'),M('GALATEA',.7,12,.50,.000,'#88aadd'),
@@ -613,8 +626,8 @@ function draw(ts){
     /* Planet glow */
     if(p.glow){const gl=ctx.createRadialGradient(pos.x,pos.y,0,pos.x,pos.y,pr*2.8);gl.addColorStop(0,`rgba(${p.glow},.38)`);gl.addColorStop(1,'transparent');ctx.fillStyle=gl;ctx.beginPath();ctx.arc(pos.x,pos.y,pr*2.8,0,τ);ctx.fill();}
 
-    /* Planet body with texture */
-    drawBody(p.name,pos.x,pos.y,pr);
+    /* Planet body with texture and rotation */
+    rotateAxisAndDraw(pos.x,pos.y,p,simT,()=>{drawBody(p.name,pos.x,pos.y,pr);});
     if(p.thinRings)drawUranusRings(pos.x,pos.y,pr);
     bodies.push({name:p.name,wx:pos.x,wy:pos.y,wr:pr,goRight:goR,type:'planet'});
   });

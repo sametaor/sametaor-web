@@ -37,6 +37,39 @@ h1{font-family:'Orbitron',sans-serif;font-size:106px;font-weight:500;letter-spac
 #solar-canvas.dragging{cursor:grabbing}
 #solar-canvas.hovering{cursor:pointer}
 
+/* ─── MUSIC PLAYER ─── */
+#music-player{
+  position:fixed;top:16px;right:16px;width:280px;
+  background:rgba(0,0,0,.85);border:1px solid rgba(0,220,220,.3);
+  padding:12px;z-index:40;font-family:'Orbitron',sans-serif;
+  backdrop-filter:blur(8px);border-radius:2px;color:#00ffcc;
+  font-size:11px;line-height:1.4;
+}
+#music-player.minimized{width:50px;height:50px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+#music-player.minimized .player-content{display:none}
+#music-player.minimized #music-toggle{display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:20px}
+#music-title{color:#ff00cc;font-weight:600;margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px}
+#music-artist{color:#88ff00;font-size:9px;margin-bottom:4px}
+#music-album{color:#00ffaa;font-size:8px;margin-bottom:8px;opacity:.8}
+#music-controls{display:flex;gap:6px;margin-bottom:8px;justify-content:center}
+#music-controls button{
+  background:rgba(0,255,200,.15);border:1px solid rgba(0,255,200,.3);
+  color:#00ffcc;font-family:'Orbitron',sans-serif;font-size:9px;
+  padding:4px 8px;cursor:pointer;border-radius:1px;transition:all .2s;
+}
+#music-controls button:hover{background:rgba(0,255,200,.3);border-color:rgba(0,255,200,.6)}
+.progress-bar{
+  width:100%;height:3px;background:rgba(0,255,200,.1);border:1px solid rgba(0,255,200,.2);
+  border-radius:1px;overflow:hidden;margin-bottom:6px;cursor:pointer;
+}
+.progress-fill{height:100%;background:linear-gradient(90deg,#00ff88,#00ffcc);width:0%}
+#music-time{display:flex;justify-content:space-between;font-size:8px;color:#00ff88;margin-bottom:8px}
+#music-volume{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+#music-volume input{width:100%;height:3px;cursor:pointer}
+#music-queue-info{text-align:center;color:#00ffaa;font-size:8px;margin-bottom:8px}
+#music-toggle{background:rgba(0,255,200,.2);border:1px solid rgba(0,255,200,.4);color:#00ffcc;font-family:'Orbitron',sans-serif;font-size:9px;padding:4px 8px;cursor:pointer;border-radius:1px;width:100%}
+#music-toggle:hover{background:rgba(0,255,200,.35)}
+
 /* Controls bar */
 #sol-controls{
   position:absolute;bottom:16px;left:50%;transform:translateX(-50%);
@@ -177,7 +210,8 @@ function updateSide(o,wx){const d=wx-cx;if(o.ls==null)o.ls=d>=0?1:-1;if(o.ls===1
 ════════════════════════════ */
 function clip(px,py,pr,fn){ctx.save();ctx.beginPath();ctx.arc(px,py,pr,0,τ);ctx.clip();fn();ctx.restore();}
 
-function txMercury(px,py,pr){clip(px,py,pr,()=>{
+function txMercury(px,py,pr,spin,tilt){clip(px,py,pr,()=>{
+  ctx.save();applySpin(px,py,spin+tilt*.5);
   const g=ctx.createRadialGradient(px-pr*.3,py-pr*.3,0,px,py,pr);
   g.addColorStop(0,'#cfc7bc');g.addColorStop(1,'#6e6258');
   ctx.fillStyle=g;ctx.fillRect(px-pr,py-pr,pr*2,pr*2);
@@ -190,9 +224,11 @@ function txMercury(px,py,pr){clip(px,py,pr,()=>{
     ctx.beginPath();ctx.arc(px+ox*pr,py+oy*pr,cr*pr,0,τ);ctx.stroke();
     ctx.fillStyle='rgba(80,72,65,.25)';ctx.beginPath();ctx.arc(px+ox*pr,py+oy*pr,cr*pr,0,τ);ctx.fill();
   });
+  ctx.restore();
 });}
 
-function txVenus(px,py,pr){clip(px,py,pr,()=>{
+function txVenus(px,py,pr,spin,tilt){clip(px,py,pr,()=>{
+  ctx.save();applySpin(px,py,spin+tilt*.5);
   const g=ctx.createRadialGradient(px-pr*.2,py-pr*.2,0,px,py,pr);
   g.addColorStop(0,'#f5df88');g.addColorStop(.5,'#e8c050');g.addColorStop(1,'#c49020');
   ctx.fillStyle=g;ctx.fillRect(px-pr,py-pr,pr*2,pr*2);
@@ -200,9 +236,11 @@ function txVenus(px,py,pr){clip(px,py,pr,()=>{
     ctx.fillStyle=`rgba(255,${235-i*8},${100-i*5},${.18+i*.02})`;
     ctx.beginPath();ctx.ellipse(px,py+yo*pr,pr*1.05,pr*.09,i*.18,0,τ);ctx.fill();
   });
+  ctx.restore();
 });}
 
-function txEarth(px,py,pr){clip(px,py,pr,()=>{
+function txEarth(px,py,pr,spin,tilt){clip(px,py,pr,()=>{
+  ctx.save();applySpin(px,py,spin);
   // Ocean
   ctx.fillStyle='#1558a0';ctx.fillRect(px-pr,py-pr,pr*2,pr*2);
   // Landmasses (simplified polygons, normalized coords)
@@ -238,9 +276,11 @@ function txEarth(px,py,pr){clip(px,py,pr,()=>{
   ctx.beginPath();ctx.ellipse(px+pr*.12,py-pr*.28,pr*.38,pr*.09,.4,0,τ);ctx.fill();
   ctx.beginPath();ctx.ellipse(px-pr*.32,py+pr*.28,pr*.32,pr*.08,-.3,0,τ);ctx.fill();
   ctx.beginPath();ctx.ellipse(px+pr*.4,py+pr*.48,pr*.28,pr*.07,.15,0,τ);ctx.fill();
+  ctx.restore();
 });}
 
-function txMars(px,py,pr){clip(px,py,pr,()=>{
+function txMars(px,py,pr,spin,tilt){clip(px,py,pr,()=>{
+  ctx.save();applySpin(px,py,spin);
   const g=ctx.createRadialGradient(px-pr*.2,py-pr*.2,0,px,py,pr);
   g.addColorStop(0,'#c8461a');g.addColorStop(1,'#7a2605');
   ctx.fillStyle=g;ctx.fillRect(px-pr,py-pr,pr*2,pr*2);
@@ -260,9 +300,11 @@ function txMars(px,py,pr){clip(px,py,pr,()=>{
   ctx.fillStyle='rgba(238,248,255,.9)';
   ctx.beginPath();ctx.ellipse(px,py-pr*.82,pr*.3,pr*.13,0,0,τ);ctx.fill();
   ctx.beginPath();ctx.ellipse(px,py+pr*.84,pr*.22,pr*.1,0,0,τ);ctx.fill();
+  ctx.restore();
 });}
 
-function txSaturn(px,py,pr){clip(px,py,pr,()=>{
+function txSaturn(px,py,pr,spin,tilt){clip(px,py,pr,()=>{
+  ctx.save();applySpin(px,py,spin+tilt);
   const g=ctx.createLinearGradient(px,py-pr,px,py+pr);
   g.addColorStop(0,'#f2d895');g.addColorStop(.12,'#eac872');g.addColorStop(.28,'#f5da8a');
   g.addColorStop(.44,'#ddb84c');g.addColorStop(.56,'#ddb84c');g.addColorStop(.72,'#f5da8a');
@@ -270,32 +312,39 @@ function txSaturn(px,py,pr){clip(px,py,pr,()=>{
   ctx.fillStyle=g;ctx.fillRect(px-pr,py-pr,pr*2,pr*2);
   ctx.fillStyle='rgba(190,140,50,.22)';ctx.fillRect(px-pr,py-pr*.12,pr*2,pr*.06);
   ctx.fillRect(px-pr,py+pr*.08,pr*2,pr*.05);
+  ctx.restore();
 });}
 
-function txUranus(px,py,pr){clip(px,py,pr,()=>{
+function txUranus(px,py,pr,spin,tilt){clip(px,py,pr,()=>{
+  ctx.save();applySpin(px,py,spin+tilt);
   const g=ctx.createRadialGradient(px-pr*.25,py-pr*.25,0,px,py,pr);
   g.addColorStop(0,'#82eae2');g.addColorStop(.6,'#46ccc4');g.addColorStop(1,'#2a9290');
   ctx.fillStyle=g;ctx.fillRect(px-pr,py-pr,pr*2,pr*2);
   ctx.fillStyle='rgba(105,225,218,.14)';ctx.beginPath();ctx.ellipse(px,py-pr*.4,pr*1.05,pr*.1,0,0,τ);ctx.fill();
   ctx.fillStyle='rgba(38,145,138,.11)';ctx.beginPath();ctx.ellipse(px,py+pr*.28,pr*1.05,pr*.08,0,0,τ);ctx.fill();
+  ctx.restore();
 });}
 
-function txNeptune(px,py,pr){clip(px,py,pr,()=>{
+function txNeptune(px,py,pr,spin,tilt){clip(px,py,pr,()=>{
+  ctx.save();applySpin(px,py,spin+tilt*.5);
   const g=ctx.createRadialGradient(px-pr*.2,py-pr*.2,0,px,py,pr);
   g.addColorStop(0,'#4a82ff');g.addColorStop(.5,'#2050cc');g.addColorStop(1,'#081e80');
   ctx.fillStyle=g;ctx.fillRect(px-pr,py-pr,pr*2,pr*2);
   ctx.fillStyle='rgba(80,120,255,.28)';ctx.beginPath();ctx.ellipse(px,py-pr*.35,pr*1.05,pr*.1,0,0,τ);ctx.fill();
   ctx.fillStyle='rgba(5,18,80,.55)';ctx.beginPath();ctx.ellipse(px+pr*.25,py-pr*.1,pr*.28,pr*.15,.4,0,τ);ctx.fill();
   ctx.fillStyle='rgba(175,200,255,.28)';ctx.beginPath();ctx.ellipse(px+pr*.1,py-pr*.4,pr*.18,pr*.04,.3,0,τ);ctx.fill();
+  ctx.restore();
 });}
 
-function txJupiter(px,py,pr){clip(px,py,pr,()=>{
+function txJupiter(px,py,pr,spin,tilt){clip(px,py,pr,()=>{
+  ctx.save();applySpin(px,py,spin+tilt);
   ctx.fillStyle='#cc88ff';ctx.fillRect(px-pr,py-pr,pr*2,pr*2);
   [[-.75,.22,'rgba(255,148,68,.55)'],[-.38,.16,'rgba(190,78,255,.44)'],[-.04,.22,'rgba(255,198,88,.38)'],
    [.28,.18,'rgba(158,68,240,.48)'],[.58,.24,'rgba(255,128,48,.44)']].forEach(([yo,h,c])=>{
     ctx.fillStyle=c;ctx.fillRect(px-pr,py+yo*pr,pr*2,h*pr);
   });
   ctx.fillStyle='rgba(255,78,78,.52)';ctx.beginPath();ctx.ellipse(px+pr*.28,py+pr*.1,pr*.28,pr*.15,0,0,τ);ctx.fill();
+  ctx.restore();
 });}
 
 /* ── Ring helpers ── */
@@ -318,13 +367,144 @@ function drawUranusRings(px,py,pr){
   ctx.restore();
 }
 
-/* ── Planet body dispatcher ── */
-function drawBody(name,px,py,pr){
+/* ── Texture coord rotation helper ── */
+// Call this INSIDE a clip() fn to spin surface features
+function applySpin(px,py,spin){
+  ctx.translate(px,py);ctx.rotate(spin);ctx.translate(-px,-py);
+}
+
+/* ════════════════════════════
+   MOON TEXTURES
+════════════════════════════ */
+function txLuna(px,py,pr,spin,tilt){clip(px,py,pr,()=>{
+  ctx.save();applySpin(px,py,spin);
+  const g=ctx.createRadialGradient(px-pr*.25,py-pr*.25,0,px,py,pr);
+  g.addColorStop(0,'#d5cfc5');g.addColorStop(1,'#6b6660');
+  ctx.fillStyle=g;ctx.fillRect(px-pr,py-pr,pr*2,pr*2);
+  ctx.fillStyle='rgba(90,85,75,.45)';
+  ctx.beginPath();ctx.ellipse(px+pr*.3,py-pr*.3,pr*.45,pr*.35,.3,0,τ);ctx.fill();
+  const craters=[[-.25,.15],[.1,.12],[.35,.1],[-.4,.08],[.45,.07],[-.15,.06]];
+  craters.forEach(([ox,oy],i)=>{
+    ctx.strokeStyle='rgba(70,65,60,.5)';ctx.lineWidth=Math.max(.3,pr*.03);
+    ctx.beginPath();ctx.arc(px+ox*pr,py+(i-2.5)*.2*pr,oy*pr,0,τ);ctx.stroke();
+    ctx.fillStyle='rgba(80,75,65,.25)';ctx.beginPath();ctx.arc(px+ox*pr,py+(i-2.5)*.2*pr,oy*pr,0,τ);ctx.fill();
+  });
+  ctx.restore();
+});}
+
+function txIo(px,py,pr,spin,tilt){clip(px,py,pr,()=>{
+  ctx.save();applySpin(px,py,spin);
+  const g=ctx.createRadialGradient(px-pr*.2,py-pr*.2,0,px,py,pr);
+  g.addColorStop(0,'#ffdd55');g.addColorStop(.5,'#ffcc22');g.addColorStop(1,'#cc8811');
+  ctx.fillStyle=g;ctx.fillRect(px-pr,py-pr,pr*2,pr*2);
+  ctx.fillStyle='rgba(255,100,0,.4)';ctx.beginPath();ctx.ellipse(px+pr*.35,py-pr*.15,pr*.35,pr*.25,.2,0,τ);ctx.fill();
+  ctx.fillStyle='rgba(200,50,0,.3)';ctx.beginPath();ctx.ellipse(px-pr*.3,py+pr*.28,pr*.28,pr*.22,.4,0,τ);ctx.fill();
+  ctx.restore();
+});}
+
+function txEuropa(px,py,pr,spin,tilt){clip(px,py,pr,()=>{
+  ctx.save();applySpin(px,py,spin);
+  ctx.fillStyle='#dae8ff';ctx.fillRect(px-pr,py-pr,pr*2,pr*2);
+  ctx.strokeStyle='rgba(100,150,200,.35)';ctx.lineWidth=Math.max(.5,pr*.04);
+  ctx.beginPath();ctx.moveTo(px-pr*.7,py-pr*.3);ctx.quadraticCurveTo(px,py+pr*.4,px+pr*.6,py-pr*.5);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(px-pr*.5,py+pr*.6);ctx.quadraticCurveTo(px+pr*.2,py-pr*.2,px+pr*.8,py+pr*.3);ctx.stroke();
+  ctx.fillStyle='rgba(50,100,150,.2)';ctx.beginPath();ctx.arc(px-pr*.25,py+pr*.35,pr*.18,0,τ);ctx.fill();
+  ctx.restore();
+});}
+
+function txGanymede(px,py,pr,spin,tilt){clip(px,py,pr,()=>{
+  ctx.save();applySpin(px,py,spin);
+  const g=ctx.createRadialGradient(px-pr*.2,py-pr*.2,0,px,py,pr);
+  g.addColorStop(0,'#c8b080');g.addColorStop(1,'#6b5a3d');
+  ctx.fillStyle=g;ctx.fillRect(px-pr,py-pr,pr*2,pr*2);
+  ctx.fillStyle='rgba(100,90,70,.4)';ctx.beginPath();ctx.ellipse(px,py-pr*.35,pr*1.05,pr*.22,0,0,τ);ctx.fill();
+  ctx.fillStyle='rgba(140,120,85,.25)';
+  ctx.beginPath();ctx.ellipse(px+pr*.25,py+pr*.28,pr*.32,pr*.18,.3,0,τ);ctx.fill();
+  ctx.restore();
+});}
+
+function txCallisto(px,py,pr,spin,tilt){clip(px,py,pr,()=>{
+  ctx.save();applySpin(px,py,spin);
+  const g=ctx.createRadialGradient(px,py,0,px,py,pr);
+  g.addColorStop(0,'#8a8a9e');g.addColorStop(1,'#4a4a52');
+  ctx.fillStyle=g;ctx.fillRect(px-pr,py-pr,pr*2,pr*2);
+  ctx.fillStyle='rgba(100,100,120,.4)';
+  ctx.beginPath();ctx.arc(px-pr*.35,py-pr*.25,pr*.28,0,τ);ctx.fill();
+  ctx.beginPath();ctx.arc(px+pr*.4,py+pr*.3,pr*.22,0,τ);ctx.fill();
+  ctx.restore();
+});}
+
+function txTitan(px,py,pr,spin,tilt){clip(px,py,pr,()=>{
+  ctx.save();applySpin(px,py,spin);
+  const g=ctx.createRadialGradient(px-pr*.15,py-pr*.15,0,px,py,pr);
+  g.addColorStop(0,'#ffdd99');g.addColorStop(.6,'#ff9944');g.addColorStop(1,'#cc7722');
+  ctx.fillStyle=g;ctx.fillRect(px-pr,py-pr,pr*2,pr*2);
+  ctx.fillStyle='rgba(100,60,30,.25)';
+  ctx.beginPath();ctx.ellipse(px,py-pr*.4,pr*1.02,pr*.18,0,0,τ);ctx.fill();
+  ctx.fillStyle='rgba(150,80,40,.2)';ctx.beginPath();ctx.ellipse(px+pr*.3,py+pr*.25,pr*.35,pr*.2,.3,0,τ);ctx.fill();
+  ctx.restore();
+});}
+
+function txTriton(px,py,pr,spin,tilt){clip(px,py,pr,()=>{
+  ctx.save();applySpin(px,py,spin);
+  const g=ctx.createRadialGradient(px-pr*.2,py-pr*.2,0,px,py,pr);
+  g.addColorStop(0,'#aaccff');g.addColorStop(.5,'#88bbee');g.addColorStop(1,'#4477aa');
+  ctx.fillStyle=g;ctx.fillRect(px-pr,py-pr,pr*2,pr*2);
+  ctx.fillStyle='rgba(200,220,255,.3)';ctx.beginPath();ctx.ellipse(px,py-pr*.45,pr*.8,pr*.2,0,0,τ);ctx.fill();
+  ctx.strokeStyle='rgba(100,180,255,.25)';ctx.lineWidth=Math.max(.5,pr*.035);
+  ctx.beginPath();ctx.moveTo(px-pr*.4,py+pr*.2);ctx.quadraticCurveTo(px+pr*.1,py+pr*.5,px+pr*.5,py+pr*.15);ctx.stroke();
+  ctx.restore();
+});}
+
+function txEnceladus(px,py,pr,spin,tilt){clip(px,py,pr,()=>{
+  ctx.save();applySpin(px,py,spin);
+  ctx.fillStyle='#f0f5ff';ctx.fillRect(px-pr,py-pr,pr*2,pr*2);
+  ctx.fillStyle='rgba(150,180,220,.25)';
+  ctx.beginPath();ctx.ellipse(px-pr*.3,py+pr*.35,pr*.4,pr*.15,.5,0,τ);ctx.fill();
+  ctx.fillStyle='rgba(100,150,200,.2)';
+  ctx.beginPath();ctx.arc(px+pr*.35,py-pr*.25,pr*.2,0,τ);ctx.fill();
+  ctx.restore();
+});}
+
+function txMimas(px,py,pr,spin,tilt){clip(px,py,pr,()=>{
+  ctx.save();applySpin(px,py,spin);
+  ctx.fillStyle='#dddde8';ctx.fillRect(px-pr,py-pr,pr*2,pr*2);
+  ctx.fillStyle='rgba(100,100,120,.5)';ctx.beginPath();ctx.arc(px+pr*.3,py-pr*.25,pr*.35,0,τ);ctx.fill();
+  ctx.strokeStyle='rgba(80,80,100,.4)';ctx.lineWidth=Math.max(.3,pr*.025);
+  for(let i=0;i<3;i++){
+    ctx.beginPath();ctx.arc(px+pr*.15+i*.15,py+pr*.15,pr*.08,0,τ);ctx.stroke();
+    ctx.fillStyle='rgba(80,80,100,.2)';ctx.beginPath();ctx.arc(px+pr*.15+i*.15,py+pr*.15,pr*.08,0,τ);ctx.fill();
+  }
+  ctx.restore();
+});}
+
+/* ── Moon body dispatcher ── */
+function drawMoon(name,px,py,pr,spin,tilt){
   switch(name){
-    case'MERCURY':txMercury(px,py,pr);break;case'VENUS':txVenus(px,py,pr);break;
-    case'EARTH':txEarth(px,py,pr);break;case'MARS':txMars(px,py,pr);break;
-    case'JUPITER':txJupiter(px,py,pr);break;case'SATURN':txSaturn(px,py,pr);break;
-    case'URANUS':txUranus(px,py,pr);break;case'NEPTUNE':txNeptune(px,py,pr);break;
+    case'LUNA':txLuna(px,py,pr,spin,tilt);break;
+    case'IO':txIo(px,py,pr,spin,tilt);break;
+    case'EUROPA':txEuropa(px,py,pr,spin,tilt);break;
+    case'GANYMEDE':txGanymede(px,py,pr,spin,tilt);break;
+    case'CALLISTO':txCallisto(px,py,pr,spin,tilt);break;
+    case'TITAN':txTitan(px,py,pr,spin,tilt);break;
+    case'TRITON':txTriton(px,py,pr,spin,tilt);break;
+    case'ENCELADUS':txEnceladus(px,py,pr,spin,tilt);break;
+    case'MIMAS':txMimas(px,py,pr,spin,tilt);break;
+    default:break;
+  }
+}
+
+/* ── Planet body dispatcher ── */
+function drawBody(name,px,py,pr,spin,tilt){
+  switch(name){
+    case'MERCURY':txMercury(px,py,pr,spin,tilt);break;
+    case'VENUS':  txVenus(px,py,pr,spin,tilt);break;
+    case'EARTH':  txEarth(px,py,pr,spin,tilt);break;
+    case'MARS':   txMars(px,py,pr,spin,tilt);break;
+    case'JUPITER':txJupiter(px,py,pr,spin,tilt);break;
+    case'SATURN': txSaturn(px,py,pr,spin,tilt);break;
+    case'URANUS': txUranus(px,py,pr,spin,tilt);break;
+    case'NEPTUNE':txNeptune(px,py,pr,spin,tilt);break;
     default:break;
   }
 }
@@ -363,22 +543,42 @@ function ellCtr(fx,fy,oR,ec,a0,os){
   const ae=oR*ec*os;return{x:fx-ae*Math.cos(a0),y:fy-ae*Math.sin(a0)};
 }
 
-/* ── Axial rotation ── */
-function rotateAxisAndDraw(px,py,planet,t,fn){
-  // Rotation direction: negative for counterclockwise (west-to-east, prograde)
-  // in canvas where Y increases downward
-  const rotAngle=-(t/planet.rotPeriod)*τ;
-  // Tilt is the axis inclination from ecliptic north pole
-  const tilt=planet.tilt||0;
+/* ── Spin angle ── */
+function spinAngle(planet,t){
+  const dir=planet.retro?1:-1;
+  return dir*(t/planet.rotPeriod)*τ;
+}
+
+/* ── Terminator shadow (day/night boundary) ── */
+function drawTerminator(px,py,pr,sunAngle,axialTilt){
+  // sunAngle: angle FROM planet TOWARD sun
+  // Rotate so the gradient goes from lit-side to dark-side
+  // accounting for axial tilt shifting the terminator orientation
   ctx.save();
+  ctx.beginPath();ctx.arc(px,py,pr,0,τ);ctx.clip();
   ctx.translate(px,py);
-  // Apply axis tilt (defines which direction the axis points)
-  ctx.rotate(tilt);
-  // Rotate around the tilted axis
-  ctx.rotate(rotAngle);
+  // The terminator tilts with axial tilt: tilt rotates which direction is "ecliptic north"
+  ctx.rotate(sunAngle+Math.PI+axialTilt*.35);// .35 scales 2D tilt effect
   ctx.translate(-px,-py);
-  fn();
+  const g=ctx.createLinearGradient(px-pr,py,px+pr,py);
+  g.addColorStop(0,'rgba(0,0,0,0)');
+  g.addColorStop(0.35,'rgba(0,0,0,0)');
+  g.addColorStop(0.52,'rgba(0,0,20,0.25)');
+  g.addColorStop(0.72,'rgba(0,0,10,0.60)');
+  g.addColorStop(1,'rgba(0,0,5,0.82)');
+  ctx.fillStyle=g;ctx.fillRect(px-pr,py-pr,pr*2,pr*2);
   ctx.restore();
+}
+
+/* ── Axial tilt indicator (visible when zoomed in, pr > 20px) ── */
+function drawTiltIndicator(px,py,pr,axialTilt){
+  if(pr<18)return;
+  const len=pr*1.35,ax=Math.cos(axialTilt+Math.PI/2),ay=Math.sin(axialTilt+Math.PI/2);
+  ctx.save();
+  ctx.strokeStyle='rgba(245,240,0,0.28)';ctx.lineWidth=1;
+  ctx.setLineDash([3,4]);
+  ctx.beginPath();ctx.moveTo(px-ax*len,py-ay*len);ctx.lineTo(px+ax*len,py+ay*len);ctx.stroke();
+  ctx.setLineDash([]);ctx.restore();
 }
 
 /* ════════════════════════════
@@ -390,15 +590,15 @@ function M(n,r,o,p,e,c){return{name:n,r,orbR:o,period:p,ecc:e,ang0:rng(0,τ),col
    PLANETS (with ALL named moons)
 ════════════════════════════ */
 const PLANETS=[
-{name:'MERCURY',r:3.5,orbR:80, period:3,  ecc:.206,ang0:rng(0,τ),color:'#c0b8e0',glow:'192,184,224',rotPeriod:58.646,tilt:0.0349,ls:null,moons:[]},
-{name:'VENUS',  r:5.5,orbR:115,period:7,  ecc:.007,ang0:rng(0,τ),color:'#f5df88',glow:'245,223,136',rotPeriod:243.025,tilt:3.0948,ls:null,moons:[]},
-{name:'EARTH',  r:6,  orbR:155,period:10, ecc:.017,ang0:rng(0,τ),color:'#44aaff',glow:'68,170,255',rotPeriod:1.0,tilt:0.4091,ls:null,
+{name:'MERCURY',r:3.5,orbR:80, period:3,  ecc:.206,ang0:rng(0,τ),color:'#c0b8e0',glow:'192,184,224',rotPeriod:1418,tilt:0.034,retro:false,ls:null,moons:[]},
+{name:'VENUS',  r:5.5,orbR:115,period:7,  ecc:.007,ang0:rng(0,τ),color:'#f5df88',glow:'245,223,136',rotPeriod:5876,tilt:3.0948,retro:true,ls:null,moons:[]},
+{name:'EARTH',  r:6,  orbR:155,period:10, ecc:.017,ang0:rng(0,τ),color:'#44aaff',glow:'68,170,255',rotPeriod:24.18,tilt:0.4091,retro:false,ls:null,
   moons:[M('LUNA',2,14,.9,.055,'#aaaacc')]},
-{name:'MARS',   r:4.5,orbR:200,period:19, ecc:.093,ang0:rng(0,τ),color:'#c8461a',glow:'200,70,26',rotPeriod:1.0257,tilt:0.4396,ls:null,
+{name:'MARS',   r:4.5,orbR:200,period:19, ecc:.093,ang0:rng(0,τ),color:'#c8461a',glow:'200,70,26',rotPeriod:24.8,tilt:0.4396,retro:false,ls:null,
   moons:[M('PHOBOS',1.2,8,.24,.015,'#cc8877'),M('DEIMOS',.9,13,.6,.0002,'#cc9988')]},
 
 /* ── JUPITER – 53 named moons ── */
-{name:'JUPITER',r:15,orbR:310,period:40,ecc:.049,ang0:rng(0,τ),color:'#cc88ff',glow:'204,136,255',rotPeriod:0.4167,tilt:0.0546,ls:null,
+{name:'JUPITER',r:15,orbR:310,period:40,ecc:.049,ang0:rng(0,τ),color:'#cc88ff',glow:'204,136,255',rotPeriod:10.0,tilt:0.0546,retro:false,ls:null,
   moons:[
   /* Inner group */
   M('METIS',.5,10,.19,.001,'#aa9988'),M('ADRASTEA',.4,11,.20,.002,'#998877'),
@@ -437,7 +637,7 @@ const PLANETS=[
 ]},
 
 /* ── SATURN – 50 named moons ── */
-{name:'SATURN',r:12,orbR:385,period:70,ecc:.057,ang0:rng(0,τ),color:'#ffcc88',glow:'255,204,136',rotPeriod:0.4375,tilt:0.4662,ls:null,rings:true,
+{name:'SATURN',r:12,orbR:385,period:70,ecc:.057,ang0:rng(0,τ),color:'#ffcc88',glow:'255,204,136',rotPeriod:10.74,tilt:0.4662,retro:false,ls:null,rings:true,
   moons:[
   /* Ring shepherds & inner */
   M('PAN',.5,25,.54,.000,'#ccbbaa'),M('DAPHNIS',.4,26,.58,.000,'#bbaa99'),
@@ -473,7 +673,7 @@ const PLANETS=[
 ]},
 
 /* ── URANUS – 27 named moons ── */
-{name:'URANUS',r:9,orbR:450,period:110,ecc:.046,ang0:rng(0,τ),color:'#44ffee',glow:'68,255,238',rotPeriod:0.708,tilt:1.7049,ls:null,thinRings:true,
+{name:'URANUS',r:9,orbR:450,period:110,ecc:.046,ang0:rng(0,τ),color:'#44ffee',glow:'68,255,238',rotPeriod:17.36,tilt:1.7049,retro:true,ls:null,thinRings:true,
   moons:[
   /* Inner small */
   M('CORDELIA',.4,6,.3,.000,'#99bbbb'),M('OPHELIA',.4,7,.35,.010,'#88aaaa'),
@@ -496,7 +696,7 @@ const PLANETS=[
 ]},
 
 /* ── NEPTUNE – 14 named moons ── */
-{name:'NEPTUNE',r:8,orbR:490,period:160,ecc:.010,ang0:rng(0,τ),color:'#4466ff',glow:'68,102,255',rotPeriod:0.667,tilt:0.4941,ls:null,
+{name:'NEPTUNE',r:8,orbR:490,period:160,ecc:.010,ang0:rng(0,τ),color:'#4466ff',glow:'68,102,255',rotPeriod:16.24,tilt:0.4941,retro:false,ls:null,
   moons:[
   M('NAIAD',.5,7,.28,.000,'#8899cc'),M('THALASSA',.5,8,.32,.000,'#99aadd'),
   M('DESPINA',.6,10,.40,.000,'#aabbee'),M('GALATEA',.7,12,.50,.000,'#88aadd'),
@@ -621,18 +821,30 @@ function draw(ts){
     p.moons.forEach(m=>{
       const mp=orbPos(pos.x,pos.y,m.orbR,m.period,m.ecc,m.ang0,simT,os);
       const mr=Math.max(.5,m.r*os),mGoR=updateSide(m,mp.x);
-      ctx.fillStyle=m.color;
-      if(m.r>=1.5){ctx.shadowColor=m.color;ctx.shadowBlur=4;}
-      ctx.globalAlpha=.9;ctx.beginPath();ctx.arc(mp.x,mp.y,mr,0,τ);ctx.fill();
-      ctx.globalAlpha=1;ctx.shadowBlur=0;
+      const mSpin=spinAngle({rotPeriod:m.period*0.5,retro:false},simT);
+      const hasTexture=['LUNA','IO','EUROPA','GANYMEDE','CALLISTO','TITAN','TRITON','ENCELADUS','MIMAS'].includes(m.name);
+      
+      if(hasTexture){
+        drawMoon(m.name,mp.x,mp.y,mr,mSpin,p.tilt*0.5);
+      } else {
+        ctx.globalAlpha=.9;
+        ctx.fillStyle=m.color;
+        if(m.r>=1.5){ctx.shadowColor=m.color;ctx.shadowBlur=4;}
+        ctx.beginPath();ctx.arc(mp.x,mp.y,mr,0,τ);ctx.fill();
+        ctx.globalAlpha=1;ctx.shadowBlur=0;
+      }
       bodies.push({name:m.name,wx:mp.x,wy:mp.y,wr:mr,goRight:mGoR,type:'moon',ancWX:pos.x,ancWY:pos.y});
     });
 
     /* Planet glow */
     if(p.glow){const gl=ctx.createRadialGradient(pos.x,pos.y,0,pos.x,pos.y,pr*2.8);gl.addColorStop(0,`rgba(${p.glow},.38)`);gl.addColorStop(1,'transparent');ctx.fillStyle=gl;ctx.beginPath();ctx.arc(pos.x,pos.y,pr*2.8,0,τ);ctx.fill();}
 
-    /* Planet body with texture and rotation */
-    rotateAxisAndDraw(pos.x,pos.y,p,simT,()=>{drawBody(p.name,pos.x,pos.y,pr);});
+    /* Planet body with texture, spin and terminator */
+    const pSpin=spinAngle(p,simT);
+    const sunDir=Math.atan2(cy-pos.y,cx-pos.x); // angle from planet toward sun
+    drawBody(p.name,pos.x,pos.y,pr,pSpin,p.tilt);
+    drawTerminator(pos.x,pos.y,pr,sunDir,p.tilt);
+    drawTiltIndicator(pos.x,pos.y,pr,p.tilt);
     if(p.thinRings)drawUranusRings(pos.x,pos.y,pr);
     bodies.push({name:p.name,wx:pos.x,wy:pos.y,wr:pr,goRight:goR,type:'planet'});
   });

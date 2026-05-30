@@ -365,11 +365,16 @@ function ellCtr(fx,fy,oR,ec,a0,os){
 
 /* ── Axial rotation ── */
 function rotateAxisAndDraw(px,py,planet,t,fn){
-  const rotAngle=(t/planet.rotPeriod)*τ;
+  // Rotation direction: negative for counterclockwise (west-to-east, prograde)
+  // in canvas where Y increases downward
+  const rotAngle=-(t/planet.rotPeriod)*τ;
+  // Tilt is the axis inclination from ecliptic north pole
   const tilt=planet.tilt||0;
   ctx.save();
   ctx.translate(px,py);
+  // Apply axis tilt (defines which direction the axis points)
   ctx.rotate(tilt);
+  // Rotate around the tilted axis
   ctx.rotate(rotAngle);
   ctx.translate(-px,-py);
   fn();

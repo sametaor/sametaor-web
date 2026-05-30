@@ -37,40 +37,128 @@ h1{font-family:'Orbitron',sans-serif;font-size:106px;font-weight:500;letter-spac
 #solar-canvas.dragging{cursor:grabbing}
 #solar-canvas.hovering{cursor:pointer}
 
-/* ─── MUSIC PLAYER ─── */
-#music-player{
-  position:fixed;top:16px;right:16px;width:280px;
-  background:rgba(0,0,0,.85);border:1px solid rgba(0,220,220,.3);
-  padding:12px;z-index:40;font-family:'Orbitron',sans-serif;
-  backdrop-filter:blur(8px);border-radius:2px;color:#00ffcc;
-  font-size:11px;line-height:1.4;
+/* ─── FLEXIBLE HUD MUSIC PLAYER ─── */
+#music-player {
+  position: fixed; bottom: 16px; right: 16px; 
+  min-width: 220px;
+  max-width: 30vw; 
+  width: max-content; 
+  z-index: 50; font-family: 'Orbitron', sans-serif;
+  filter: drop-shadow(0 0 6px rgba(0,255,255,0.4));
+  transition: filter 0.4s ease;
 }
-#music-player.minimized{width:50px;height:50px;cursor:pointer;display:flex;align-items:center;justify-content:center}
-#music-player.minimized .player-content{display:none}
-#music-player.minimized #music-toggle{display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:20px}
-#music-title{color:#ff00cc;font-weight:600;margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px}
-#music-artist{color:#88ff00;font-size:9px;margin-bottom:4px}
-#music-album{color:#00ffaa;font-size:8px;margin-bottom:8px;opacity:.8}
-#music-controls{display:flex;gap:6px;margin-bottom:8px;justify-content:center}
-#music-controls button{
-  background:rgba(0,255,200,.15);border:1px solid rgba(0,255,200,.3);
-  color:#00ffcc;font-family:'Orbitron',sans-serif;font-size:9px;
-  padding:4px 8px;cursor:pointer;border-radius:1px;transition:all .2s;
-}
-#music-controls button:hover{background:rgba(0,255,200,.3);border-color:rgba(0,255,200,.6)}
-.progress-bar{
-  width:100%;height:3px;background:rgba(0,255,200,.1);border:1px solid rgba(0,255,200,.2);
-  border-radius:1px;overflow:hidden;margin-bottom:6px;cursor:pointer;
-}
-.progress-fill{height:100%;background:linear-gradient(90deg,#00ff88,#00ffcc);width:0%}
-#music-time{display:flex;justify-content:space-between;font-size:8px;color:#00ff88;margin-bottom:8px}
-#music-volume{display:flex;align-items:center;gap:6px;margin-bottom:8px}
-#music-volume input{width:100%;height:3px;cursor:pointer}
-#music-queue-info{text-align:center;color:#00ffaa;font-size:8px;margin-bottom:8px}
-#music-toggle{background:rgba(0,255,200,.2);border:1px solid rgba(0,255,200,.4);color:#00ffcc;font-family:'Orbitron',sans-serif;font-size:9px;padding:4px 8px;cursor:pointer;border-radius:1px;width:100%}
-#music-toggle:hover{background:rgba(0,255,200,.35)}
+#music-player.is-playing { filter: drop-shadow(0 0 10px rgba(255,0,204,0.5)); }
 
-/* Controls bar */
+@media (max-width: 900px) { #music-player { max-width: 45vw; } }
+@media (max-width: 600px) { #music-player { max-width: 70vw; } }
+
+.player-wrap {
+  background: #00ffff; padding: 1px;
+  clip-path: polygon(24px 0, 100% 0, 100% 100%, 0 100%, 0 24px);
+  transition: background 0.4s ease;
+}
+#music-player.is-playing .player-wrap { background: #ff00cc; }
+
+.player-inner {
+  background: #110222;
+  clip-path: polygon(23px 0, 100% 0, 100% 100%, 0 100%, 0 23px);
+  padding: 12px 14px; display: flex; flex-direction: column;
+}
+
+.player-top {
+  display: flex; align-items: center; justify-content: flex-start;
+  margin-bottom: 6px; gap: 12px; overflow: hidden;
+}
+.eq-icon {
+  display: flex; align-items: center; justify-content: center;
+  gap: 3px; height: 18px; flex-shrink: 0;
+}
+.eq-icon span {
+  display: inline-block; width: 3px; background: #00ffff;
+  border-radius: 1px; box-shadow: 0 0 5px #00ffff;
+}
+
+.bar1 { height: 10px; } .bar2 { height: 18px; } .bar3 { height: 12px; } .bar4 { height: 18px; } .bar5 { height: 10px; }
+
+#music-player.is-playing .eq-icon span { animation: eqBounce 0.5s infinite alternate ease-in-out; }
+#music-player.is-playing .bar2 { animation-delay: 0.1s; animation-duration: 0.4s; }
+#music-player.is-playing .bar3 { animation-delay: 0.2s; animation-duration: 0.6s; }
+#music-player.is-playing .bar4 { animation-delay: 0.3s; animation-duration: 0.4s; }
+#music-player.is-playing .bar5 { animation-delay: 0.4s; animation-duration: 0.5s; }
+
+@keyframes eqBounce { 0% { height: 4px; } 100% { height: 18px; } }
+
+.title-wrap {
+  flex: 1; overflow: hidden; white-space: nowrap; position: relative; 
+  display: flex; align-items: center;
+}
+.header-title {
+  color: #f5f000; font-size: 14px; font-weight: 700; letter-spacing: 0.08em;
+  text-shadow: 0 0 6px rgba(245,240,0,0.4); display: inline-block;
+}
+
+.track-info-container {
+  width: 100%; overflow: hidden; white-space: nowrap; position: relative;
+  border-bottom: 1px solid rgba(0,255,255,0.15); padding-bottom: 6px;
+}
+#music-player.is-playing .track-info-container { border-bottom-color: rgba(255,0,204,0.3); }
+
+#artist-name {
+  color: #00ffff; font-weight: 500; font-size: 10px; letter-spacing: 0.1em;
+  display: inline-block; text-shadow: 0 0 4px rgba(0,255,255,0.3);
+}
+#music-player.is-playing #artist-name { color: #ff00cc; text-shadow: 0 0 4px rgba(255,0,204,0.3); }
+
+.marquee { 
+  padding-left: 100%;
+  animation: scrollText 8s linear infinite; 
+}
+@keyframes scrollText { 0% { transform: translateX(0%); } 100% { transform: translateX(-100%); } }
+
+.hover-reveal {
+  max-height: 0; opacity: 0; overflow: hidden;
+  transition: max-height 0.4s ease, opacity 0.3s ease, margin-top 0.3s ease;
+}
+#music-player:hover .hover-reveal { max-height: 140px; opacity: 1; margin-top: 8px; }
+
+/* 3 Mode buttons */
+.player-modes { display: flex; gap: 4px; margin-bottom: 10px; }
+.mode-btn {
+  flex: 1; background: rgba(0,0,0,0.4); border: 1px solid rgba(0,220,220,0.2);
+  color: rgba(0,220,220,0.4); font-family: 'Orbitron', sans-serif;
+  font-size: 8px; letter-spacing: 0.05em; padding: 5px 0; cursor: pointer;
+  transition: all 0.2s; border-radius: 1px;
+}
+.mode-btn.active {
+  background: rgba(0,255,255,0.1); color: #00ffff; border-color: #00ffff;
+  text-shadow: 0 0 5px rgba(0,255,255,0.5); box-shadow: inset 0 0 8px rgba(0,255,255,0.2);
+}
+
+.ctrl-row { display: flex; gap: 4px; justify-content: center; margin-bottom: 10px; }
+.ctrl-btn {
+  background: rgba(0,220,220,.05); border: 1px solid rgba(0,220,220,.2);
+  color: #00ffcc; cursor: pointer; font-size: 11px; padding: 4px 10px;
+  transition: all 0.2s; border-radius: 1px;
+}
+.ctrl-btn:hover { background: rgba(0,220,220,.2); border-color: #00ffff; color: #00ffff; box-shadow: 0 0 8px rgba(0,255,255,.3);}
+.ctrl-btn.active-state { background: rgba(255,0,204,.15); color: #ff00cc; border-color: #ff00cc; box-shadow: 0 0 8px rgba(255,0,204,.4);}
+.local-only { display: none; }
+#music-player.is-local .local-only { display: flex; }
+
+.prog-bar { 
+  width: 100%; height: 3px; background: rgba(0,220,220,.15); 
+  border: 1px solid rgba(0,220,220,.25); cursor: pointer; position: relative; border-radius: 1px;
+}
+.prog-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #aa00ff, #00ffff); pointer-events: none; transition: width 0.1s linear;}
+.time-row { display: flex; justify-content: space-between; font-size: 8px; color: rgba(0,220,220,.5); margin-top: 4px; margin-bottom: 8px;}
+.vol-row { display: flex; align-items: center; gap: 8px; }
+.vol-slider { -webkit-appearance: none; width: 100%; height: 2px; background: rgba(0,220,220,.3); outline: none; cursor: pointer; }
+.vol-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 8px; height: 8px; background: #00ffff;
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%); box-shadow: 0 0 5px #00ffff;
+}
+
+/* Solar Controls */
 #sol-controls{
   position:absolute;bottom:16px;left:50%;transform:translateX(-50%);
   display:flex;align-items:center;gap:10px;
@@ -124,9 +212,73 @@ h1{font-family:'Orbitron',sans-serif;font-size:106px;font-weight:500;letter-spac
 </style>
 </head>
 <body>
+
+<div id="music-player">
+  <div class="player-wrap">
+    <div class="player-inner">
+      
+      <div class="player-top">
+        <div class="eq-icon">
+          <span class="bar1"></span>
+          <span class="bar2"></span>
+          <span class="bar3"></span>
+          <span class="bar4"></span>
+          <span class="bar5"></span>
+        </div>
+        <div class="title-wrap" id="title-wrap">
+          <div class="header-title" id="song-title">SYSTEM READY</div>
+        </div>
+      </div>
+
+      <div class="track-info-container" id="marquee-wrap">
+        <div id="artist-name">SELECT SOURCE</div>
+      </div>
+
+      <div class="hover-reveal">
+        <div class="player-modes">
+          <button id="mode-hosted" class="mode-btn active">Synthwave</button>
+          <button id="mode-local" class="mode-btn">LOCAL</button>
+          <button id="mode-yt" class="mode-btn">YT GEMS</button>
+        </div>
+
+        <div class="ctrl-row">
+          <button class="ctrl-btn" id="btn-prev">⏮</button>
+          <button class="ctrl-btn" id="btn-play">▶</button>
+          <button class="ctrl-btn" id="btn-next">⏭</button>
+          <button class="ctrl-btn" id="btn-shuffle" title="Shuffle">🔀</button>
+          <button class="ctrl-btn" id="btn-repeat" title="Repeat">🔁</button>
+          <button class="ctrl-btn local-only" id="btn-load" title="Load Folder">📂</button>
+        </div>
+
+        <div class="prog-bar" id="prog-bar">
+          <div class="prog-fill" id="prog-fill"></div>
+        </div>
+        <div class="time-row">
+          <span id="time-curr">0:00</span>
+          <span id="time-tot">0:00</span>
+        </div>
+
+        <div class="vol-row">
+          <span style="font-size:11px; color:#00ffff; text-shadow:0 0 3px #00ffff;">🔊</span>
+          <input type="range" class="vol-slider" id="vol-slider" min="0" max="100" value="50">
+        </div>
+      </div>
+      
+    </div>
+  </div>
+
+  <audio id="hosted-audio" style="display:none;" crossorigin="anonymous"></audio>
+  <input type="file" id="local-upload" accept="audio/*" multiple webkitdirectory directory style="display:none;">
+  <audio id="local-audio" style="display:none;"></audio>
+
+  <div style="position: absolute; left: -9999px; top: -9999px; width: 200px; height: 200px; visibility: visible; opacity: 1;">
+    <div id="yt-api-container"></div>
+  </div>
+</div>
+
+
 <div id="scroll-wrap">
 
-<!-- ═══ HERO ═══ -->
 <section id="hero">
   <div class="sky"></div>
   <div id="starfield"></div>
@@ -143,7 +295,6 @@ h1{font-family:'Orbitron',sans-serif;font-size:106px;font-weight:500;letter-spac
   </div>
 </section>
 
-<!-- ═══ SOLAR SYSTEM ═══ -->
 <section id="solar-system">
   <canvas id="solar-canvas"></canvas>
   <div id="watermark">WHERE SHALL WE GO?</div>
@@ -164,6 +315,391 @@ h1{font-family:'Orbitron',sans-serif;font-size:106px;font-weight:500;letter-spac
 </div>
 
 <script>
+/* ════ MUSIC PLAYER LOGIC ════ */
+(function(){
+  // ── SERVER PLAYLIST CONFIGURATION ──
+  // Step 1: Put your MP3 files in a folder named "music" in the root directory.
+  // Step 2: Type their exact names into this array. 
+  // Tip: If you name them "Artist - Title.mp3", the player will split the text perfectly!
+  const SERVER_MUSIC_FOLDER = "music/";
+  const SERVER_FILES = [
+    "HOME - Resonance.mp3",
+    "HOME - Hold.mp3",
+    "L♾️PERAMA - sametaor.mp3",
+    "Trancium - sametaor.mp3",
+    "Trancium_v2 - sametaor.mp3"
+  ];
+
+  // UI Elements
+  const pWrap = document.getElementById('music-player');
+  const sTitle = document.getElementById('song-title');
+  const aName = document.getElementById('artist-name');
+  const tWrap = document.getElementById('title-wrap');
+  const mWrap = document.getElementById('marquee-wrap');
+  const btnHosted = document.getElementById('mode-hosted');
+  const btnLocal = document.getElementById('mode-local');
+  const btnYt = document.getElementById('mode-yt');
+  const btnPlay = document.getElementById('btn-play');
+  const btnPrev = document.getElementById('btn-prev');
+  const btnNext = document.getElementById('btn-next');
+  const btnShuffle = document.getElementById('btn-shuffle');
+  const btnRepeat = document.getElementById('btn-repeat');
+  const btnLoad = document.getElementById('btn-load');
+  const progBar = document.getElementById('prog-bar');
+  const progFill = document.getElementById('prog-fill');
+  const timeCurr = document.getElementById('time-curr');
+  const timeTot = document.getElementById('time-tot');
+  const volSlider = document.getElementById('vol-slider');
+  
+  // Audio Elements
+  const hostedAudio = document.getElementById('hosted-audio');
+  const localAudio = document.getElementById('local-audio');
+  const localUpload = document.getElementById('local-upload');
+
+  // Global State
+  let mode = 'hosted'; 
+  let isPlaying = false;
+  let globalShuffle = false;
+  let globalRepeat = false;
+
+  // Array Shuffle Helper
+  function shuffleArray(arr) {
+    for(let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+  }
+
+  // Hosted State Setup
+  let hostedPlaylist = SERVER_FILES.map(file => ({
+    url: SERVER_MUSIC_FOLDER + file,
+    rawName: file.replace(/\.[^/.]+$/, "")
+  }));
+  let hostedMap = [];
+  let hostedIdx = 0;
+
+  function buildHostedMap() {
+    hostedMap = Array.from({length: hostedPlaylist.length}, (_, i) => i);
+    if(globalShuffle) shuffleArray(hostedMap);
+  }
+  buildHostedMap();
+
+  // Local State Setup
+  let localFiles = [];
+  let playlistMap = []; 
+  let localIdx = 0; 
+
+  function buildLocalPlaylist() {
+    playlistMap = Array.from({length: localFiles.length}, (_, i) => i);
+    if(globalShuffle) shuffleArray(playlistMap);
+  }
+
+  // YT State (Lazy Loaded)
+  let ytPlayer = null;
+  let ytScriptLoaded = false;
+  let ytReady = false;
+  let ytStarted = false;
+  let currentYtTitle = "";
+  let currentYtArtist = "";
+
+  function fmt(time) {
+    if(isNaN(time) || time < 0 || time === Infinity) return "LIVE";
+    const m = Math.floor(time / 60);
+    const s = Math.floor(time % 60);
+    return m + ":" + (s < 10 ? "0" : "") + s;
+  }
+
+  function triggerSongChange(rawTitle, rawArtist) {
+    let title = rawTitle;
+    let artist = rawArtist;
+    
+    if (title.includes(" - ")) {
+      const parts = title.split(" - ");
+      artist = parts[0].trim();
+      title = parts.slice(1).join(" - ").trim();
+    }
+
+    sTitle.textContent = title;
+    aName.textContent = artist;
+    sTitle.classList.remove('marquee');
+    aName.classList.remove('marquee');
+
+    setTimeout(() => {
+      if (sTitle.scrollWidth > tWrap.clientWidth) sTitle.classList.add('marquee');
+      if (aName.scrollWidth > mWrap.clientWidth) aName.classList.add('marquee');
+    }, 150);
+  }
+
+  function updatePlayUI(playing) {
+    isPlaying = playing;
+    btnPlay.textContent = playing ? '⏸' : '▶';
+    pWrap.classList.toggle('is-playing', playing); 
+  }
+
+  /* ── LAZY-LOAD YOUTUBE MODULE ── */
+  function initYouTube() {
+    ytScriptLoaded = true;
+    triggerSongChange("BOOTING YT MODULE...", "Please Wait");
+
+    const tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/iframe_api";
+    const firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+    window.onYouTubeIframeAPIReady = function() {
+      ytPlayer = new YT.Player('yt-api-container', {
+        height: '200', width: '200', 
+        playerVars: {
+          controls: 0, showinfo: 0, rel: 0, autoplay: 0,
+          origin: window.location.origin !== "null" ? window.location.origin : "*"
+        },
+        events: {
+          'onReady': (e) => {
+            ytReady = true;
+            e.target.cuePlaylist({
+              listType: 'playlist',
+              list: 'PL63ZO-jXFTatssIiQjDHSa6X-WPu-EyYV'
+            });
+            e.target.setVolume(parseInt(volSlider.value));
+            if(globalShuffle) e.target.setShuffle(true);
+            if(globalRepeat) e.target.setLoop(true);
+            
+            if(mode === 'yt') triggerSongChange("YT GEMS CONNECTED", "PRESS PLAY");
+          },
+          'onStateChange': (e) => {
+            if (e.data === YT.PlayerState.PLAYING) {
+              updatePlayUI(true);
+              if (!ytStarted) { 
+                if(globalShuffle) e.target.setShuffle(true); 
+                ytStarted = true; 
+              }
+              const data = ytPlayer.getVideoData();
+              if(data && data.title && data.title !== currentYtTitle) {
+                 currentYtTitle = data.title;
+                 currentYtArtist = data.author || "YouTube Music";
+                 triggerSongChange(currentYtTitle, currentYtArtist);
+              }
+            } else if (e.data === YT.PlayerState.PAUSED) {
+              updatePlayUI(false);
+            } else if (e.data === YT.PlayerState.ENDED) {
+               ytPlayer.nextVideo();
+            }
+          },
+          'onError': (e) => {
+             triggerSongChange("YT ERROR: " + (e.data===150 ? "BLOCKED BY OWNER" : e.data), "YouTube Music");
+          }
+        }
+      });
+    };
+  }
+
+  /* ── HOSTED AUDIO LOGIC ── */
+  function playHostedTrack() {
+    if (hostedPlaylist.length === 0) {
+      triggerSongChange("NO FILES", "Server Directory");
+      return;
+    }
+    const actualIdx = hostedMap[hostedIdx];
+    const track = hostedPlaylist[actualIdx];
+    
+    hostedAudio.src = track.url;
+    hostedAudio.play().catch(e => console.log("Waiting for user interaction"));
+    triggerSongChange(track.rawName, "Server Directory");
+  }
+
+  hostedAudio.addEventListener('play', () => updatePlayUI(true));
+  hostedAudio.addEventListener('pause', () => updatePlayUI(false));
+  hostedAudio.addEventListener('ended', () => {
+    if(globalRepeat && hostedPlaylist.length === 1) { hostedAudio.play(); return; }
+    hostedIdx++;
+    if(hostedIdx >= hostedPlaylist.length) {
+      if(globalRepeat) { hostedIdx = 0; playHostedTrack(); }
+      else { hostedIdx = 0; updatePlayUI(false); }
+    } else {
+      playHostedTrack();
+    }
+  });
+
+  /* ── LOCAL FILES LOGIC ── */
+  btnLoad.addEventListener('click', () => localUpload.click());
+  
+  localUpload.addEventListener('change', (e) => {
+    localFiles = Array.from(e.target.files).filter(f => f.type.startsWith('audio/'));
+    if(localFiles.length === 0) return;
+    buildLocalPlaylist();
+    localIdx = 0;
+    playLocalTrack();
+  });
+
+  function playLocalTrack() {
+    if(localFiles.length === 0) return;
+    const actualIdx = playlistMap[localIdx];
+    const file = localFiles[actualIdx];
+    localAudio.src = URL.createObjectURL(file);
+    localAudio.play();
+    triggerSongChange(file.name.replace(/\.[^/.]+$/, ""), "Local Directory");
+  }
+
+  localAudio.addEventListener('play', () => updatePlayUI(true));
+  localAudio.addEventListener('pause', () => updatePlayUI(false));
+  localAudio.addEventListener('ended', () => {
+    if(globalRepeat && localFiles.length === 1) { localAudio.play(); return; }
+    localIdx++;
+    if(localIdx >= localFiles.length) {
+      if(globalRepeat) { localIdx = 0; playLocalTrack(); }
+      else { localIdx = 0; updatePlayUI(false); }
+    } else {
+      playLocalTrack();
+    }
+  });
+
+
+  /* ── UNIVERSAL TOGGLES ── */
+  btnShuffle.addEventListener('click', () => {
+    globalShuffle = !globalShuffle;
+    btnShuffle.classList.toggle('active-state', globalShuffle);
+    
+    if(mode === 'hosted' && hostedPlaylist.length > 0) {
+      const currActual = hostedMap[hostedIdx];
+      buildHostedMap();
+      hostedIdx = hostedMap.indexOf(currActual);
+    } else if(mode === 'local' && localFiles.length > 0) {
+      const currActual = playlistMap[localIdx];
+      buildLocalPlaylist();
+      localIdx = playlistMap.indexOf(currActual);
+    } else if(mode === 'yt' && ytReady) {
+      ytPlayer.setShuffle(globalShuffle);
+    }
+  });
+
+  btnRepeat.addEventListener('click', () => {
+    globalRepeat = !globalRepeat;
+    btnRepeat.classList.toggle('active-state', globalRepeat);
+    
+    if(mode === 'yt' && ytReady) {
+      ytPlayer.setLoop(globalRepeat);
+    }
+  });
+
+  /* ── SHARED CONTROLS ── */
+  btnHosted.addEventListener('click', () => setMode('hosted'));
+  btnLocal.addEventListener('click', () => setMode('local'));
+  btnYt.addEventListener('click', () => setMode('yt'));
+
+  function setMode(newMode) {
+    mode = newMode;
+    btnHosted.classList.toggle('active', mode === 'hosted');
+    btnLocal.classList.toggle('active', mode === 'local');
+    btnYt.classList.toggle('active', mode === 'yt');
+    
+    pWrap.classList.toggle('is-local', mode === 'local');
+    
+    if (!hostedAudio.paused) hostedAudio.pause();
+    if (!localAudio.paused) localAudio.pause();
+    if (ytReady && ytPlayer && ytPlayer.getPlayerState && ytPlayer.getPlayerState() === YT.PlayerState.PLAYING) ytPlayer.pauseVideo();
+    
+    updatePlayUI(false);
+
+    if (mode === 'hosted') {
+      triggerSongChange(hostedPlaylist.length ? "READY (PRESS PLAY)" : "NO FILES CONFIGURED", "Server Directory");
+    } else if (mode === 'local') {
+      triggerSongChange(localFiles.length ? "READY (PRESS PLAY)" : "LOAD FOLDER", "Local Directory");
+    } else if (mode === 'yt') {
+      if (!ytScriptLoaded) {
+        initYouTube();
+      } else {
+        triggerSongChange(currentYtTitle || "YT GEMS CONNECTED", currentYtArtist || "PRESS PLAY");
+      }
+    }
+  }
+
+  btnPlay.addEventListener('click', () => {
+    if(mode === 'hosted') {
+      if(isPlaying) hostedAudio.pause();
+      else if (hostedAudio.src && !hostedAudio.src.endsWith(window.location.pathname)) hostedAudio.play();
+      else playHostedTrack();
+    } else if (mode === 'local') {
+      if(localFiles.length === 0) return localUpload.click();
+      if(isPlaying) localAudio.pause();
+      else localAudio.play();
+    } else if (mode === 'yt') {
+      if(!ytReady) return;
+      if(isPlaying) ytPlayer.pauseVideo();
+      else ytPlayer.playVideo();
+    }
+  });
+
+  btnNext.addEventListener('click', () => {
+    if(mode === 'hosted' && hostedPlaylist.length > 0) {
+      hostedIdx = (hostedIdx + 1) % hostedPlaylist.length;
+      playHostedTrack();
+    } else if(mode === 'local' && localFiles.length > 0) {
+      localIdx = (localIdx + 1) % localFiles.length;
+      playLocalTrack();
+    } else if(mode === 'yt' && ytReady) {
+      ytPlayer.nextVideo();
+    }
+  });
+
+  btnPrev.addEventListener('click', () => {
+    if(mode === 'hosted' && hostedPlaylist.length > 0) {
+      hostedIdx = hostedIdx === 0 ? hostedPlaylist.length - 1 : hostedIdx - 1;
+      playHostedTrack();
+    } else if(mode === 'local' && localFiles.length > 0) {
+      localIdx = localIdx === 0 ? localFiles.length - 1 : localIdx - 1;
+      playLocalTrack();
+    } else if(mode === 'yt' && ytReady) {
+      ytPlayer.previousVideo();
+    }
+  });
+
+  /* ── PROGRESS & VOLUME ── */
+  volSlider.addEventListener('input', (e) => {
+    const v = parseInt(e.target.value);
+    hostedAudio.volume = v / 100;
+    localAudio.volume = v / 100;
+    if(ytReady) ytPlayer.setVolume(v);
+  });
+
+  progBar.addEventListener('click', (e) => {
+    const rect = progBar.getBoundingClientRect();
+    const pos = (e.clientX - rect.left) / rect.width;
+    
+    if(mode === 'hosted' && isFinite(hostedAudio.duration)) {
+      hostedAudio.currentTime = pos * hostedAudio.duration;
+    } else if(mode === 'local' && localAudio.duration) {
+      localAudio.currentTime = pos * localAudio.duration;
+    } else if(mode === 'yt' && ytReady && ytPlayer.getDuration) {
+      ytPlayer.seekTo(pos * ytPlayer.getDuration(), true);
+    }
+  });
+
+  setInterval(() => {
+    let curr = 0, tot = 0;
+
+    if(mode === 'yt' && ytReady && isPlaying && ytPlayer.getCurrentTime) {
+      curr = ytPlayer.getCurrentTime(); tot = ytPlayer.getDuration();
+    } else if (mode === 'hosted' && isPlaying && hostedAudio) {
+      curr = hostedAudio.currentTime; tot = hostedAudio.duration;
+    } else if (mode === 'local' && isPlaying && localAudio) {
+      curr = localAudio.currentTime; tot = localAudio.duration;
+    }
+    
+    if(tot > 0 && isFinite(tot)) {
+      progFill.style.width = (curr / tot * 100) + "%";
+      timeCurr.textContent = fmt(curr);
+      timeTot.textContent = fmt(tot);
+    } else if (tot === Infinity) {
+      progFill.style.width = "100%";
+      timeCurr.textContent = "LIVE";
+      timeTot.textContent = "STREAM";
+    } else {
+      progFill.style.width = "0%";
+    }
+  }, 500);
+
+})();
+
 /* ════ HERO STARFIELD ════ */
 (function(){
   const F=document.getElementById('starfield');

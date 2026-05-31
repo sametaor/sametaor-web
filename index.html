@@ -18,7 +18,7 @@ section{height:100vh;width:100vw;scroll-snap-align:start;position:relative;overf
 @keyframes starTwinkle{0%,100%{opacity:.05;transform:scale(.5)}50%{opacity:var(--peak);transform:scale(1)}}
 .horizon{position:absolute;top:50%;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#ff00cc 30%,#00ffff 70%,transparent);box-shadow:0 0 14px #ff00cc,0 0 28px #00ffff;z-index:3}
 .grid-wrap{position:absolute;top:50%;left:-20%;right:-20%;height:55%;z-index:2;perspective:280px;perspective-origin:50% 0%;overflow:hidden}
-.grid{width:100%;height:200%;transform:rotateX(72deg);transform-origin:top center;background-image:linear-gradient(rgba(160,0,255,.5) 1px,transparent 1px),linear-gradient(90deg,rgba(160,0,255,.5) 1px,transparent 1px);background-size:60px 60px;animation:gridScroll 1s linear infinite}
+.grid{width:100%;height:200%;transform:rotateX(72deg);transform-origin:top center;background-image:linear-gradient(rgba(var(--gc,160,0,255),var(--ga,.5)) 1px,transparent 1px),linear-gradient(90deg,rgba(var(--gc,160,0,255),var(--ga,.5)) 1px,transparent 1px);background-size:60px 60px;animation:gridScroll var(--gspd,1s) linear infinite;transition:--ga .08s,--gspd .12s}
 @keyframes gridScroll{from{background-position:0 0}to{background-position:0 60px}}
 .scanlines{position:absolute;top:50%;left:0;right:0;height:50%;z-index:6;pointer-events:none;background:repeating-linear-gradient(to bottom,transparent 0px,transparent 2px,rgba(0,0,0,.55) 2px,rgba(0,0,0,.55) 4px)}
 .scanlines::after{content:'';position:absolute;left:0;right:0;height:60px;background:linear-gradient(to bottom,transparent 0%,rgba(255,0,200,.09) 40%,rgba(255,0,200,.20) 50%,rgba(255,0,200,.09) 60%,transparent 100%);animation:scanBand 3.5s linear infinite}
@@ -78,15 +78,9 @@ h1{font-family:'Orbitron',sans-serif;font-size:106px;font-weight:500;letter-spac
   border-radius: 1px; box-shadow: 0 0 5px #00ffff;
 }
 
-.bar1 { height: 10px; } .bar2 { height: 18px; } .bar3 { height: 12px; } .bar4 { height: 18px; } .bar5 { height: 10px; }
-
-#music-player.is-playing .eq-icon span { animation: eqBounce 0.5s infinite alternate ease-in-out; }
-#music-player.is-playing .bar2 { animation-delay: 0.1s; animation-duration: 0.4s; }
-#music-player.is-playing .bar3 { animation-delay: 0.2s; animation-duration: 0.6s; }
-#music-player.is-playing .bar4 { animation-delay: 0.3s; animation-duration: 0.4s; }
-#music-player.is-playing .bar5 { animation-delay: 0.4s; animation-duration: 0.5s; }
-
-@keyframes eqBounce { 0% { height: 4px; } 100% { height: 18px; } }
+/* EQ bars: heights driven by JS, smooth transitions */
+.eq-icon { min-width: 24px; overflow: visible; }
+.eq-icon span { height: 10px; transition: height 0.06s ease; }
 
 .title-wrap {
   flex: 1; overflow: hidden; white-space: nowrap; position: relative; 
@@ -109,11 +103,15 @@ h1{font-family:'Orbitron',sans-serif;font-size:106px;font-weight:500;letter-spac
 }
 #music-player.is-playing #artist-name { color: #ff00cc; text-shadow: 0 0 4px rgba(255,0,204,0.3); }
 
-.marquee { 
-  padding-left: 100%;
-  animation: scrollText 8s linear infinite; 
+.header-title.marquee, #artist-name.marquee {
+  animation: scrollText 10s linear infinite;
+  display: inline-block;
+  padding-right: 80px;
 }
-@keyframes scrollText { 0% { transform: translateX(0%); } 100% { transform: translateX(-100%); } }
+@keyframes scrollText {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(calc(-100% - 80px)); }
+}
 
 .hover-reveal {
   max-height: 0; opacity: 0; overflow: hidden;
@@ -218,13 +216,7 @@ h1{font-family:'Orbitron',sans-serif;font-size:106px;font-weight:500;letter-spac
     <div class="player-inner">
       
       <div class="player-top">
-        <div class="eq-icon">
-          <span class="bar1"></span>
-          <span class="bar2"></span>
-          <span class="bar3"></span>
-          <span class="bar4"></span>
-          <span class="bar5"></span>
-        </div>
+        <div class="eq-icon" id="eq-icon"></div>
         <div class="title-wrap" id="title-wrap">
           <div class="header-title" id="song-title">SYSTEM READY</div>
         </div>
@@ -425,7 +417,15 @@ h1{font-family:'Orbitron',sans-serif;font-size:106px;font-weight:500;letter-spac
     aName.classList.remove('marquee');
 
     setTimeout(() => {
-      if (sTitle.scrollWidth > tWrap.clientWidth) sTitle.classList.add('marquee');
+      const vw20 = window.innerWidth * 0.2;
+      const titleW = sTitle.scrollWidth;
+      if (titleW > vw20) {
+        sTitle.classList.add('marquee');
+        setEqBars(5);
+      } else {
+        const n = Math.max(3, Math.min(12, Math.round(5 + (1 - titleW / vw20) * 7)));
+        setEqBars(n);
+      }
       if (aName.scrollWidth > mWrap.clientWidth) aName.classList.add('marquee');
     }, 150);
   }
@@ -698,6 +698,70 @@ h1{font-family:'Orbitron',sans-serif;font-size:106px;font-weight:500;letter-spac
     }
   }, 500);
 
+  /* ── setEqBars: rebuild eq-icon spans ── */
+  function setEqBars(n) {
+    const eq = document.getElementById('eq-icon');
+    if (!eq) return;
+    // Keep existing spans if count matches
+    if (eq.children.length === n) return;
+    eq.innerHTML = '';
+    for (let i = 0; i < n; i++) {
+      const s = document.createElement('span');
+      s.style.height = '10px';
+      eq.appendChild(s);
+    }
+    // Normalise eq-icon width so title doesn't jump
+    eq.style.width = (n * 3 + (n - 1) * 3) + 'px';
+    eq.style.flexShrink = '0';
+  }
+  // Init 5 bars on load
+  setEqBars(5);
+
+  /* ── Web Audio API: connect sources to analyser ── */
+  let _actx = null, _analyser = null, _freqData = null;
+  const _src = {};
+
+  function _getCtx() {
+    if (_actx) return _actx;
+    _actx = new (window.AudioContext || window.webkitAudioContext)();
+    _analyser = _actx.createAnalyser();
+    _analyser.fftSize = 256;
+    _analyser.smoothingTimeConstant = 0.82;
+    _freqData = new Uint8Array(_analyser.frequencyBinCount);
+    _analyser.connect(_actx.destination);
+    return _actx;
+  }
+
+  function _connectEl(el, key) {
+    try {
+      _getCtx();
+      if (_src[key]) return;
+      const node = _actx.createMediaElementSource(el);
+      node.connect(_analyser);
+      _src[key] = node;
+    } catch(e) { /* CORS or already connected */ }
+  }
+
+  hostedAudio.addEventListener('play', () => {
+    _connectEl(hostedAudio, 'hosted');
+    if (_actx && _actx.state === 'suspended') _actx.resume();
+  });
+  localAudio.addEventListener('play', () => {
+    _connectEl(localAudio, 'local');
+    if (_actx && _actx.state === 'suspended') _actx.resume();
+  });
+
+  /* Expose to grid/visualizer loop */
+  window._viz = {
+    getFreq() {
+      if (!_analyser) return null;
+      _analyser.getByteFrequencyData(_freqData);
+      return _freqData;
+    },
+    isActive() { return isPlaying; },
+    getMode()  { return mode; }
+  };
+
 })();
 
 /* ════ HERO STARFIELD ════ */
@@ -714,6 +778,112 @@ h1{font-family:'Orbitron',sans-serif;font-size:106px;font-weight:500;letter-spac
     el.style.cssText=`left:${Math.random()*100}%;top:${top}%;width:${sz}px;height:${sz}px;background:${c};box-shadow:0 0 ${(sz*2).toFixed(1)}px ${c},0 0 ${(sz*5).toFixed(1)}px ${c}44;--dur:${dur};--delay:${del};--peak:${pk};`;
     F.appendChild(el);
   }
+})();
+
+/* ════ VISUALIZER + GRID AUDIO LOOP ════ */
+(function(){
+  const gridEl  = document.querySelector('.grid');
+  const eqEl    = document.getElementById('eq-icon');
+
+  // Smoothed values
+  let sEnergy = 0, sBass = 0, sMid = 0, sHi = 0;
+  const barSmooth = [];
+  let phase = 0;
+
+  function lerp(a, b, t) { return a + (b - a) * t; }
+
+  function tick(ts) {
+    requestAnimationFrame(tick);
+    const viz = window._viz;
+    if (!viz) return;
+
+    const active  = viz.isActive();
+    const isYT    = viz.getMode() === 'yt';
+    const freq    = (!isYT && active) ? viz.getFreq() : null;
+    const bars    = eqEl ? eqEl.querySelectorAll('span') : [];
+    const n       = bars.length;
+
+    let energy = 0, bass = 0, mid = 0, hi = 0;
+
+    if (freq && active) {
+      // Frequency bins (fftSize=256 → 128 bins, ~86 Hz/bin at 44.1 kHz)
+      // Bass  ≈ bins 0–4   (~0–344 Hz)
+      // Mid   ≈ bins 5–20  (~430–1720 Hz)
+      // Hi    ≈ bins 21–60 (~1806–5160 Hz)
+      let bSum = 0, mSum = 0, hSum = 0, tot = 0;
+      for (let i = 0; i < freq.length; i++) {
+        tot += freq[i];
+        if (i < 4)        bSum += freq[i];
+        else if (i < 20)  mSum += freq[i];
+        else if (i < 60)  hSum += freq[i];
+      }
+      energy = tot  / (freq.length * 255);
+      bass   = bSum / (4   * 255);
+      mid    = mSum / (16  * 255);
+      hi     = hSum / (40  * 255);
+
+      // Drive eq bars from frequency bins mapped to n bars
+      const step = Math.floor(freq.length * 0.65 / n); // use lower 65% of spectrum
+      for (let i = 0; i < n; i++) {
+        let bv = 0;
+        for (let j = 0; j < step; j++) bv += freq[i * step + j];
+        const raw = bv / (step * 255);
+        barSmooth[i] = lerp(barSmooth[i] || 0.1, raw, 0.22);
+        bars[i].style.height = Math.max(2, Math.round(barSmooth[i] * 22)) + 'px';
+      }
+
+    } else if (active && isYT) {
+      // YouTube simulation: organic sine oscillation per bar
+      phase += 0.04;
+      energy = 0.28 + 0.18 * Math.sin(phase * 2.3);
+      bass   = 0.35 + 0.25 * Math.abs(Math.sin(phase * 1.1));
+      for (let i = 0; i < n; i++) {
+        const h = 3 + 17 * Math.abs(Math.sin(phase * (1.2 + i * 0.35) + i * 0.7));
+        barSmooth[i] = lerp(barSmooth[i] || 0.1, h / 20, 0.15);
+        bars[i].style.height = Math.max(2, Math.round(barSmooth[i] * 20)) + 'px';
+      }
+
+    } else {
+      // Idle: bars gently fall to flat resting state
+      phase += 0.012;
+      for (let i = 0; i < n; i++) {
+        const rest = 0.05 + 0.03 * Math.sin(phase + i * 0.9);
+        barSmooth[i] = lerp(barSmooth[i] || rest, rest, 0.04);
+        bars[i].style.height = Math.max(2, Math.round(barSmooth[i] * 22)) + 'px';
+      }
+    }
+
+    // Smooth global values
+    sEnergy = lerp(sEnergy, active ? energy : 0, active ? 0.12 : 0.04);
+    sBass   = lerp(sBass,   active ? bass   : 0, active ? 0.15 : 0.04);
+    sMid    = lerp(sMid,    active ? mid    : 0, active ? 0.12 : 0.04);
+
+    // ── Grid reactivity ──
+    if (gridEl) {
+      // Alpha: normally 0.5, punches up on bass hits (max ~1.2, clamped in render)
+      const alpha    = Math.min(1.0, 0.28 + sBass * 1.2 + sMid * 0.35);
+      // Speed: faster on energy peaks (normal=1s, min=0.28s)
+      const spd      = Math.max(0.28, 1.0 - sEnergy * 0.85);
+      // Colour shift: towards magenta on hi, purple at rest
+      const r = Math.round(160 + sHi * 80);
+      const b = Math.round(255 - sBass * 60);
+      gridEl.style.setProperty('--ga',   alpha.toFixed(3));
+      gridEl.style.setProperty('--gspd', spd.toFixed(3) + 's');
+      gridEl.style.setProperty('--gc',   `${r},0,${b}`);
+      // Subtle glow on grid-wrap (no rendering artifacts unlike filter on grid)
+      const wrap = gridEl.parentElement;
+      if (wrap) {
+        const glow = (sBass * 18).toFixed(1);
+        wrap.style.filter = active
+          ? `drop-shadow(0 0 ${glow}px rgba(${r},0,${b},0.7))`
+          : 'none';
+      }
+    }
+
+    sHi = lerp(sHi, active ? hi : 0, active ? 0.10 : 0.03);
+  }
+
+  requestAnimationFrame(tick);
 })();
 
 /* ════ SOLAR SYSTEM ════ */

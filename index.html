@@ -1477,7 +1477,9 @@ function drawTerminator(px,py,pr,sunAngle,axialTilt){
   ctx.beginPath();ctx.arc(px,py,pr,0,τ);ctx.clip();
   ctx.translate(px,py);
   // The terminator tilts with axial tilt: tilt rotates which direction is "ecliptic north"
-  ctx.rotate(sunAngle+Math.PI+axialTilt*.35);// .35 scales 2D tilt effect
+  // Scale factor now adapts to extreme tilts for better visualization
+  const tiltScale=Math.min(1,Math.abs(Math.cos(axialTilt*Math.PI/180))*0.5+0.35);
+  ctx.rotate(sunAngle+Math.PI+axialTilt*tiltScale);
   ctx.translate(-px,-py);
   const g=ctx.createLinearGradient(px-pr,py,px+pr,py);
   g.addColorStop(0,'rgba(0,0,0,0)');
@@ -1491,12 +1493,26 @@ function drawTerminator(px,py,pr,sunAngle,axialTilt){
 
 /* ── Axial tilt indicator (visible when zoomed in, pr > 20px) ── */
 function drawTiltIndicator(px,py,pr,axialTilt){
-  if(pr<18)return;
+  if(pr<8)return;  // Lower threshold to show tilts more readily
   const len=pr*1.35,ax=Math.cos(axialTilt+Math.PI/2),ay=Math.sin(axialTilt+Math.PI/2);
+  const absTilt=Math.abs(axialTilt);
+  // Make extreme tilts (>45°) more visually prominent
+  const opacity=absTilt>45?0.45:0.28;
+  const width=absTilt>45?1.5:1;
+  
   ctx.save();
-  ctx.strokeStyle='rgba(245,240,0,0.28)';ctx.lineWidth=1;
+  ctx.strokeStyle=`rgba(245,240,0,${opacity})`;
+  ctx.lineWidth=width;
   ctx.setLineDash([3,4]);
   ctx.beginPath();ctx.moveTo(px-ax*len,py-ay*len);ctx.lineTo(px+ax*len,py+ay*len);ctx.stroke();
+  
+  // Add dots at ends for extreme tilts
+  if(absTilt>45){
+    ctx.fillStyle=`rgba(245,240,0,${opacity})`;
+    ctx.beginPath();ctx.arc(px-ax*len,py-ay*len,1.5,0,τ);ctx.fill();
+    ctx.beginPath();ctx.arc(px+ax*len,py+ay*len,1.5,0,τ);ctx.fill();
+  }
+  
   ctx.setLineDash([]);ctx.restore();
 }
 
@@ -1509,15 +1525,15 @@ function M(n,r,o,p,e,c){return{name:n,r,orbR:o,period:p,ecc:e,ang0:rng(0,τ),col
    PLANETS (with ALL named moons)
 ════════════════════════════ */
 const PLANETS=[
-{name:'MERCURY',r:3.5,orbR:80, period:3,  ecc:.206,ang0:rng(0,τ),color:'#c0b8e0',glow:'192,184,224',rotPeriod:1418,tilt:0.034,retro:false,ls:null,moons:[]},
-{name:'VENUS',  r:5.5,orbR:115,period:7,  ecc:.007,ang0:rng(0,τ),color:'#f5df88',glow:'245,223,136',rotPeriod:5876,tilt:3.0948,retro:true,ls:null,moons:[]},
-{name:'EARTH',  r:6,  orbR:155,period:10, ecc:.017,ang0:rng(0,τ),color:'#44aaff',glow:'68,170,255',rotPeriod:24.18,tilt:0.4091,retro:false,ls:null,
+{name:'MERCURY',r:3.5,orbR:80, period:3.87,  ecc:.206,ang0:rng(0,τ),color:'#c0b8e0',glow:'192,184,224',rotPeriod:1418,tilt:0.034,retro:false,ls:null,moons:[]},
+{name:'VENUS',  r:5.5,orbR:115,period:7.23,  ecc:.007,ang0:rng(0,τ),color:'#f5df88',glow:'245,223,136',rotPeriod:5876,tilt:177.36,retro:true,ls:null,moons:[]},
+{name:'EARTH',  r:6,  orbR:155,period:10, ecc:.017,ang0:rng(0,τ),color:'#44aaff',glow:'68,170,255',rotPeriod:24.18,tilt:23.44,retro:false,ls:null,
   moons:[M('LUNA',2,14,.9,.055,'#aaaacc')]},
-{name:'MARS',   r:4.5,orbR:200,period:19, ecc:.093,ang0:rng(0,τ),color:'#c8461a',glow:'200,70,26',rotPeriod:24.8,tilt:0.4396,retro:false,ls:null,
+{name:'MARS',   r:4.5,orbR:200,period:18.81, ecc:.093,ang0:rng(0,τ),color:'#c8461a',glow:'200,70,26',rotPeriod:24.8,tilt:25.19,retro:false,ls:null,
   moons:[M('PHOBOS',1.2,8,.24,.015,'#cc8877'),M('DEIMOS',.9,13,.6,.0002,'#cc9988')]},
 
 /* ── JUPITER – 53 named moons ── */
-{name:'JUPITER',r:15,orbR:310,period:40,ecc:.049,ang0:rng(0,τ),color:'#cc88ff',glow:'204,136,255',rotPeriod:10.0,tilt:0.0546,retro:false,ls:null,
+{name:'JUPITER',r:15,orbR:310,period:118.6,ecc:.049,ang0:rng(0,τ),color:'#cc88ff',glow:'204,136,255',rotPeriod:10.0,tilt:3.13,retro:false,ls:null,
   moons:[
   /* Inner group */
   M('METIS',.5,10,.19,.001,'#aa9988'),M('ADRASTEA',.4,11,.20,.002,'#998877'),
@@ -1556,7 +1572,7 @@ const PLANETS=[
 ]},
 
 /* ── SATURN – 50 named moons ── */
-{name:'SATURN',r:12,orbR:385,period:70,ecc:.057,ang0:rng(0,τ),color:'#ffcc88',glow:'255,204,136',rotPeriod:10.74,tilt:0.4662,retro:false,ls:null,rings:true,
+{name:'SATURN',r:12,orbR:385,period:294.6,ecc:.057,ang0:rng(0,τ),color:'#ffcc88',glow:'255,204,136',rotPeriod:10.74,tilt:26.73,retro:false,ls:null,rings:true,
   moons:[
   /* Ring shepherds & inner */
   M('PAN',.5,25,.54,.000,'#ccbbaa'),M('DAPHNIS',.4,26,.58,.000,'#bbaa99'),
@@ -1592,7 +1608,7 @@ const PLANETS=[
 ]},
 
 /* ── URANUS – 27 named moons ── */
-{name:'URANUS',r:9,orbR:450,period:110,ecc:.046,ang0:rng(0,τ),color:'#44ffee',glow:'68,255,238',rotPeriod:17.36,tilt:1.7049,retro:true,ls:null,thinRings:true,
+{name:'URANUS',r:9,orbR:450,period:840.1,ecc:.046,ang0:rng(0,τ),color:'#44ffee',glow:'68,255,238',rotPeriod:17.36,tilt:97.77,retro:true,ls:null,thinRings:true,
   moons:[
   /* Inner small */
   M('CORDELIA',.4,6,.3,.000,'#99bbbb'),M('OPHELIA',.4,7,.35,.010,'#88aaaa'),
@@ -1615,7 +1631,7 @@ const PLANETS=[
 ]},
 
 /* ── NEPTUNE – 14 named moons ── */
-{name:'NEPTUNE',r:8,orbR:490,period:160,ecc:.010,ang0:rng(0,τ),color:'#4466ff',glow:'68,102,255',rotPeriod:16.24,tilt:0.4941,retro:false,ls:null,
+{name:'NEPTUNE',r:8,orbR:490,period:1647.9,ecc:.010,ang0:rng(0,τ),color:'#4466ff',glow:'68,102,255',rotPeriod:16.24,tilt:28.32,retro:false,ls:null,
   moons:[
   M('NAIAD',.5,7,.28,.000,'#8899cc'),M('THALASSA',.5,8,.32,.000,'#99aadd'),
   M('DESPINA',.6,10,.40,.000,'#aabbee'),M('GALATEA',.7,12,.50,.000,'#88aadd'),

@@ -7,8 +7,40 @@
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-#scroll-wrap{height:100vh;overflow-y:scroll;scroll-snap-type:y mandatory;scroll-behavior:smooth}
-section{height:100vh;width:100vw;scroll-snap-align:start;position:relative;overflow:hidden}
+
+/* Lock body to prevent any accidental viewport overflow */
+body { 
+  overflow: hidden; 
+  background: #000; 
+}
+
+/* Scroll wrapper logic */
+#scroll-wrap {
+  height: 100vh;
+  width: 100%;
+  overflow-y: scroll;
+  overflow-x: hidden; /* Kills any lingering horizontal overflow */
+  scroll-snap-type: y mandatory;
+  scroll-behavior: smooth;
+  
+  /* Hides the vertical scrollbar in Firefox/IE/Edge */
+  scrollbar-width: none; 
+  -ms-overflow-style: none;
+}
+
+/* Hides the vertical scrollbar in Chrome/Safari/Opera */
+#scroll-wrap::-webkit-scrollbar {
+  display: none;
+}
+
+/* Sections */
+section {
+  height: 100vh;
+  width: 100%; /* FIX: Changed from 100vw to perfectly respect container bounds */
+  scroll-snap-align: start;
+  position: relative;
+  overflow: hidden;
+}
 
 /* ─── HERO ─── */
 #hero{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px}

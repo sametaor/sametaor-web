@@ -785,6 +785,35 @@ h1{font-family:'Orbitron',sans-serif;font-size:106px;font-weight:500;letter-spac
   const gridEl  = document.querySelector('.grid');
   const eqEl    = document.getElementById('eq-icon');
 
+  // --- TILE ENGINE SETUP ---
+  // Create a canvas perfectly overlaid inside the grid to inherit its 3D transform
+  const tileCanvas = document.createElement('canvas');
+  tileCanvas.id = 'tile-canvas';
+  tileCanvas.style.cssText = 'position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:1; mix-blend-mode: screen;';
+  if (gridEl) gridEl.appendChild(tileCanvas);
+  const tctx = tileCanvas ? tileCanvas.getContext('2d') : null;
+
+  let cw = 0, ch = 0;
+  function resizeGrid() {
+    if (!gridEl || !tileCanvas) return;
+    // Canvas dimensions match the un-transformed CSS dimensions of the grid
+    cw = tileCanvas.width = gridEl.clientWidth;
+    ch = tileCanvas.height = gridEl.clientHeight;
+  }
+  window.addEventListener('resize', resizeGrid);
+  resizeGrid();
+
+  // Take over the grid background animation manually for perfect pixel-sync with tiles
+  if (gridEl) gridEl.style.animation = 'none';
+  let gridTotalScrolled = 0;
+
+  const tiles = [];
+  const colCooldown = new Array(150).fill(0); // Prevents overlap in columns
+  const palette = ['#00ffff', '#ff00cc', '#aa00ff', '#f5f000']; 
+  let lastTs = null;
+  let prevBass = 0;
+  // --- END TILE ENGINE SETUP ---
+
   // Smoothed values
   let sEnergy = 0, sBass = 0, sMid = 0, sHi = 0;
   const barSmooth = [];
@@ -794,6 +823,12 @@ h1{font-family:'Orbitron',sans-serif;font-size:106px;font-weight:500;letter-spac
 
   function tick(ts) {
     requestAnimationFrame(tick);
+    
+    // Calculate delta time for smooth scrolling across refresh rates
+    if (lastTs === null) lastTs = ts;
+    const dt = Math.min((ts - lastTs) / 1000, 0.1); 
+    lastTs = ts;
+
     const viz = window._viz;
     if (!viz) return;
 
@@ -806,10 +841,6 @@ h1{font-family:'Orbitron',sans-serif;font-size:106px;font-weight:500;letter-spac
     let energy = 0, bass = 0, mid = 0, hi = 0;
 
     if (freq && active) {
-      // Frequency bins (fftSize=256 → 128 bins, ~86 Hz/bin at 44.1 kHz)
-      // Bass  ≈ bins 0–4   (~0–344 Hz)
-      // Mid   ≈ bins 5–20  (~430–1720 Hz)
-      // Hi    ≈ bins 21–60 (~1806–5160 Hz)
       let bSum = 0, mSum = 0, hSum = 0, tot = 0;
       for (let i = 0; i < freq.length; i++) {
         tot += freq[i];
@@ -822,8 +853,7 @@ h1{font-family:'Orbitron',sans-serif;font-size:106px;font-weight:500;letter-spac
       mid    = mSum / (16  * 255);
       hi     = hSum / (40  * 255);
 
-      // Drive eq bars from frequency bins mapped to n bars
-      const step = Math.floor(freq.length * 0.65 / n); // use lower 65% of spectrum
+      const step = Math.floor(freq.length * 0.65 / n); 
       for (let i = 0; i < n; i++) {
         let bv = 0;
         for (let j = 0; j < step; j++) bv += freq[i * step + j];
@@ -833,7 +863,6 @@ h1{font-family:'Orbitron',sans-serif;font-size:106px;font-weight:500;letter-spac
       }
 
     } else if (active && isYT) {
-      // YouTube simulation: organic sine oscillation per bar
       phase += 0.04;
       energy = 0.28 + 0.18 * Math.sin(phase * 2.3);
       bass   = 0.35 + 0.25 * Math.abs(Math.sin(phase * 1.1));
@@ -844,7 +873,6 @@ h1{font-family:'Orbitron',sans-serif;font-size:106px;font-weight:500;letter-spac
       }
 
     } else {
-      // Idle: bars gently fall to flat resting state
       phase += 0.012;
       for (let i = 0; i < n; i++) {
         const rest = 0.05 + 0.03 * Math.sin(phase + i * 0.9);
@@ -853,34 +881,150 @@ h1{font-family:'Orbitron',sans-serif;font-size:106px;font-weight:500;letter-spac
       }
     }
 
-    // Smooth global values
     sEnergy = lerp(sEnergy, active ? energy : 0, active ? 0.12 : 0.04);
     sBass   = lerp(sBass,   active ? bass   : 0, active ? 0.15 : 0.04);
     sMid    = lerp(sMid,    active ? mid    : 0, active ? 0.12 : 0.04);
+    sHi     = lerp(sHi,     active ? hi     : 0, active ? 0.10 : 0.03);
 
-    // ── Grid reactivity ──
+    // Grid reactivity variables
+    const alpha = Math.min(1.0, 0.28 + sBass * 1.2 + sMid * 0.35);
+    const spd   = Math.max(0.28, 1.0 - sEnergy * 0.85);
+    const r = Math.round(160 + sHi * 80);
+    const b = Math.round(255 - sBass * 60);
+
     if (gridEl) {
-      // Alpha: normally 0.5, punches up on bass hits (max ~1.2, clamped in render)
-      const alpha    = Math.min(1.0, 0.28 + sBass * 1.2 + sMid * 0.35);
-      // Speed: faster on energy peaks (normal=1s, min=0.28s)
-      const spd      = Math.max(0.28, 1.0 - sEnergy * 0.85);
-      // Colour shift: towards magenta on hi, purple at rest
-      const r = Math.round(160 + sHi * 80);
-      const b = Math.round(255 - sBass * 60);
       gridEl.style.setProperty('--ga',   alpha.toFixed(3));
-      gridEl.style.setProperty('--gspd', spd.toFixed(3) + 's');
       gridEl.style.setProperty('--gc',   `${r},0,${b}`);
-      // Subtle glow on grid-wrap (no rendering artifacts unlike filter on grid)
       const wrap = gridEl.parentElement;
       if (wrap) {
         const glow = (sBass * 18).toFixed(1);
-        wrap.style.filter = active
-          ? `drop-shadow(0 0 ${glow}px rgba(${r},0,${b},0.7))`
-          : 'none';
+        wrap.style.filter = active ? `drop-shadow(0 0 ${glow}px rgba(${r},0,${b},0.7))` : 'none';
       }
     }
 
-    sHi = lerp(sHi, active ? hi : 0, active ? 0.10 : 0.03);
+    // ── PIANO TILES SYNC & RENDER ──
+    if (tctx && gridEl) {
+      // 1. Perfectly sync grid lines with tile speed
+      const scrollStep = (60 / spd) * dt;
+      gridTotalScrolled += scrollStep;
+      const gridOffset = gridTotalScrolled % 60;
+      gridEl.style.backgroundPosition = `0px ${gridOffset}px`;
+
+      // 2. Tile Spawning
+      const numCols = Math.floor(cw / 60);
+      if (active && sEnergy > 0.12) {
+        // Spawn more heavily on hard bass hits
+        let spawns = sBass > 0.6 ? 2 : (Math.random() < sEnergy * 0.4 ? 1 : 0);
+        for (let i = 0; i < spawns; i++) {
+           const c = Math.floor(Math.random() * numCols);
+           if (colCooldown[c] <= 0) {
+              tiles.push({
+                col: c,
+                y: gridOffset - 120, // Lock strictly to grid vertices
+                color: palette[Math.floor(Math.random() * palette.length)],
+                state: 'falling',
+                opacity: 0,
+                pressGlow: 0
+              });
+              // Ensure gap between tiles on the same column
+              colCooldown[c] = 60 + Math.random() * 240; 
+           }
+        }
+      }
+
+      // Cool down columns based on scroll speed
+      for (let i = 0; i < colCooldown.length; i++) {
+        if (colCooldown[i] > 0) colCooldown[i] -= scrollStep;
+      }
+
+      // 3. Beat Detection
+      const isBeat = (sBass > prevBass + 0.04 && sBass > 0.45) || (sEnergy > 0.7);
+      prevBass = sBass;
+
+      // 4. Render Cycle
+      tctx.clearRect(0, 0, cw, ch);
+      
+      const pressZone = ch * 0.68; // Virtual "hit line" position
+      const hitTolerance = ch * 0.20; // Forgiving hit box
+
+      // Draw subtle dashed "hit line" horizon
+      if (active) {
+          tctx.save();
+          tctx.strokeStyle = `rgba(${r},255,${b}, 0.25)`;
+          tctx.lineWidth = 2;
+          tctx.setLineDash([15, 20]);
+          tctx.beginPath();
+          tctx.moveTo(0, pressZone);
+          tctx.lineTo(cw, pressZone);
+          tctx.stroke();
+          tctx.restore();
+      }
+
+      // Update and draw each tile
+      for (let i = tiles.length - 1; i >= 0; i--) {
+        const t = tiles[i];
+
+        if (t.state === 'falling') {
+           t.y += scrollStep; // Move synchronously with grid background
+           t.opacity = Math.min(1, t.opacity + dt * 3);
+
+           // Detect press on beat
+           if (isBeat && Math.abs(t.y - pressZone) < hitTolerance) {
+              t.state = 'pressed';
+              t.pressGlow = 1.0;
+           } else if (t.y > ch) {
+              tiles.splice(i, 1); // Culling off-screen tiles
+              continue;
+           }
+        } else if (t.state === 'pressed') {
+           t.y += scrollStep * 0.3; // Slight pause on impact
+           t.pressGlow -= dt * 2.5;
+           t.opacity -= dt * 2;
+           if (t.opacity <= 0 || t.pressGlow <= 0) {
+              tiles.splice(i, 1);
+              continue;
+           }
+        }
+
+        // Calculate precise grid vertices
+        tctx.save();
+        const x = t.col * 60 + 1;
+        const y = t.y + 1;
+        const w = 58; 
+        const h = 58;
+
+        // Smooth fade-in at the horizon top
+        const horizonFade = Math.min(1, Math.max(0, (t.y + 100) / 250));
+        tctx.globalAlpha = t.opacity * horizonFade;
+
+        if (t.state === 'falling') {
+           // Idle falling tile (transparent fill, neon stroke)
+           tctx.fillStyle = t.color;
+           tctx.globalAlpha = t.opacity * horizonFade * 0.15;
+           tctx.fillRect(x, y, w, h);
+
+           tctx.globalAlpha = t.opacity * horizonFade * 0.7;
+           tctx.strokeStyle = t.color;
+           tctx.lineWidth = 2;
+           tctx.strokeRect(x, y, w, h);
+
+           tctx.shadowColor = t.color;
+           tctx.shadowBlur = 8;
+           tctx.strokeRect(x, y, w, h);
+
+        } else if (t.state === 'pressed') {
+           // Pressed tile (bright white flash, heavy color glow, shrink effect)
+           tctx.globalAlpha = t.opacity;
+           tctx.fillStyle = '#ffffff';
+           tctx.shadowColor = t.color;
+           tctx.shadowBlur = 40 * t.pressGlow;
+
+           const shrink = (1 - t.pressGlow) * 15;
+           tctx.fillRect(x + shrink, y + shrink, w - shrink*2, h - shrink*2);
+        }
+        tctx.restore();
+      }
+    }
   }
 
   requestAnimationFrame(tick);

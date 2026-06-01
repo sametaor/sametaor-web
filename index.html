@@ -50,11 +50,44 @@ section {
 @keyframes starTwinkle{0%,100%{opacity:.05;transform:scale(.5)}50%{opacity:var(--peak);transform:scale(1)}}
 .horizon{position:absolute;top:50%;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#ff00cc 30%,#00ffff 70%,transparent);box-shadow:0 0 14px #ff00cc,0 0 28px #00ffff;z-index:3}
 .grid-wrap{position:absolute;top:50%;left:-20%;right:-20%;height:55%;z-index:2;perspective:280px;perspective-origin:50% 0%;overflow:hidden}
-.grid{width:100%;height:200%;transform:rotateX(72deg);transform-origin:top center;background-image:linear-gradient(rgba(var(--gc,160,0,255),var(--ga,.5)) 1px,transparent 1px),linear-gradient(90deg,rgba(var(--gc,160,0,255),var(--ga,.5)) 1px,transparent 1px);background-size:60px 60px;animation:gridScroll var(--gspd,1s) linear infinite;transition:--ga .08s,--gspd .12s}
+.grid {
+  width: 100%;
+  height: 200%;
+  transform: rotateX(72deg);
+  transform-origin: top center;
+  
+  /* Horizontal lines ONLY - Locked to Vaporwave Cyan */
+  background-image: linear-gradient(rgba(0, 255, 255, var(--ga, 0.65)) 1px, transparent 1px);
+  background-size: 100% 60px;
+  background-position: 0px 0px;
+  position: relative;
+}
+
+/* Vertical lines overlay */
+.grid::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  
+  /* Pink to Deep Purple gradient taken from your Logo */
+  background: linear-gradient(to bottom, #ff00cc 0%, #4a0080 100%);
+  
+  /* Mask the gradient to only show 1px vertical lines every 60px */
+  -webkit-mask-image: linear-gradient(90deg, black 1px, transparent 1px);
+  mask-image: linear-gradient(90deg, black 1px, transparent 1px);
+  -webkit-mask-size: 60px 100%;
+  mask-size: 60px 100%;
+  -webkit-mask-position: 0px 0px;
+  mask-position: 0px 0px;
+  
+  /* Syncs opacity with the horizontal lines */
+  opacity: var(--ga, 0.65);
+  pointer-events: none;
+}
 @keyframes gridScroll{from{background-position:0 0}to{background-position:0 60px}}
 .scanlines{position:absolute;top:50%;left:0;right:0;height:50%;z-index:6;pointer-events:none;background:repeating-linear-gradient(to bottom,transparent 0px,transparent 2px,rgba(0,0,0,.55) 2px,rgba(0,0,0,.55) 4px)}
-.scanlines::after{content:'';position:absolute;left:0;right:0;height:60px;background:linear-gradient(to bottom,transparent 0%,rgba(255,0,200,.09) 40%,rgba(255,0,200,.20) 50%,rgba(255,0,200,.09) 60%,transparent 100%);animation:scanBand 3.5s linear infinite}
-@keyframes scanBand{from{top:-60px}to{top:100%}}
+.scanlines::after{content:'';position:absolute;left:0;right:0;height:60px;background:linear-gradient(to bottom,transparent 0%,rgba(255,0,200,.09) 40%,rgba(255,0,200,.20) 50%,rgba(255,0,200,.09) 60%,transparent 100%);animation:scanBand 3.5s linear infinite }
+@keyframes scanBand{from{top:-100%}to{top:100%}}
 .content{position:relative;z-index:10;display:flex;flex-direction:column;align-items:center;gap:10px}
 .content img.logo{width:323px;height:323px;object-fit:contain;animation:logoPulse 4s ease-in-out infinite}
 @keyframes logoPulse{0%,100%{filter:drop-shadow(0 0 20px rgba(255,0,200,.8)) drop-shadow(0 0 50px rgba(255,0,200,.35))}50%{filter:drop-shadow(0 0 36px rgba(255,0,200,1)) drop-shadow(0 0 80px rgba(120,0,255,.6))}}
@@ -136,13 +169,21 @@ h1{font-family:'Orbitron',sans-serif;font-size:106px;font-weight:500;letter-spac
 #music-player.is-playing #artist-name { color: #ff00cc; text-shadow: 0 0 4px rgba(255,0,204,0.3); }
 
 .header-title.marquee, #artist-name.marquee {
-  animation: scrollText 10s linear infinite;
+  /* We use 12 seconds so the 2s pause is exactly 16.66% of the animation */
+  animation: scrollText 12s linear infinite;
   display: inline-block;
-  padding-right: 80px;
+  will-change: transform;
 }
+
 @keyframes scrollText {
-  0%   { transform: translateX(0); }
-  100% { transform: translateX(calc(-100% - 80px)); }
+  /* Hold at 0 for exactly 2 seconds */
+  0%, 16.66% { 
+    transform: translateX(0); 
+  }
+  /* Scroll exactly the distance calculated by JS */
+  100% { 
+    transform: translateX(var(--scroll-dist)); 
+  }
 }
 
 .hover-reveal {
@@ -188,56 +229,58 @@ h1{font-family:'Orbitron',sans-serif;font-size:106px;font-weight:500;letter-spac
   clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%); box-shadow: 0 0 5px #00ffff;
 }
 
-/* Solar Controls */
-#sol-controls{
-  position:absolute;bottom:16px;left:50%;transform:translateX(-50%);
-  display:flex;align-items:center;gap:10px;
-  background:rgba(0,0,0,.72);border:1px solid rgba(0,220,220,.2);
-  padding:8px 16px;z-index:30;font-family:'Orbitron',sans-serif;
-  backdrop-filter:blur(6px);white-space:nowrap;border-radius:2px;
-  pointer-events:auto;
+/* ─── SOLAR SYSTEM CONTROLS ─── */
+#sol-controls-tr {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  display: flex;
+  gap: 8px;
+  z-index: 30;
+  pointer-events: auto;
 }
-#btn-pause{
-  font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:.1em;
-  background:transparent;border:1px solid rgba(0,220,220,.35);
-  color:rgba(0,220,220,.6);padding:5px 11px;cursor:pointer;border-radius:2px;
-  transition:all .15s;flex-shrink:0;
-}
-#btn-pause:hover{color:#00ffff;border-color:#00ffff}
-#btn-pause.paused{color:#ff55aa;border-color:#ff55aa}
-.ctrl-sep{color:rgba(0,220,220,.18);font-size:16px;margin:0 2px;user-select:none}
-.ctrl-lbl{color:rgba(0,220,220,.35);font-size:9px;letter-spacing:.12em;flex-shrink:0}
 
-/* Speed slider */
-#speed-wrap{display:flex;flex-direction:column;gap:4px;width:280px}
-#spd-slider{
-  -webkit-appearance:none;appearance:none;
-  width:100%;height:3px;cursor:pointer;outline:none;border-radius:0;
-  background:linear-gradient(90deg,#00ffff,#aa00ff,#ff00cc);
+.icon-btn {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 16px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,.6);
+  border: 1px solid rgba(0,220,220,.3);
+  color: rgba(0,220,220,.6);
+  cursor: pointer;
+  border-radius: 2px;
+  transition: all .15s;
+  backdrop-filter: blur(6px);
+  outline: none;
 }
-#spd-slider::-webkit-slider-thumb{
-  -webkit-appearance:none;width:12px;height:12px;
-  background:#f5f000;border:none;cursor:pointer;
-  box-shadow:0 0 8px #f5f000;clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
-}
-#spd-slider::-moz-range-thumb{width:12px;height:12px;background:#f5f000;border:none;cursor:pointer;border-radius:0}
-#spd-labels{display:flex;justify-content:space-between;padding:0 2px}
-#spd-labels span{font-size:8px;color:rgba(0,200,200,.3);letter-spacing:.05em;cursor:pointer;transition:color .15s}
-#spd-labels span.active{color:#f5f000;text-shadow:0 0 5px #f5f000}
-#spd-labels span:hover{color:rgba(0,220,220,.7)}
 
-/* Reset + watermark */
-#zoom-reset{
-  position:absolute;top:16px;right:20px;z-index:20;
-  font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:.12em;
-  color:rgba(0,220,220,.5);border:1px solid rgba(0,220,220,.3);
-  background:rgba(0,0,0,.5);padding:5px 12px;cursor:pointer;display:none
+.icon-btn:hover {
+  color: #00ffff;
+  border-color: #00ffff;
+  box-shadow: 0 0 8px rgba(0,255,255,0.3);
 }
-#zoom-reset:hover{color:#00ffff;border-color:#00ffff}
-#watermark{
-  position:absolute;top:18px;left:20px;z-index:10;
-  font-family:'Orbitron',sans-serif;font-size:12px;
-  color:rgba(0,220,220,.28);pointer-events:none;letter-spacing:.1em
+
+.icon-btn.paused {
+  color: #ff55aa;
+  border-color: #ff55aa;
+}
+
+#zoom-reset { display: none; } /* Hidden by default until zoomed/clicked */
+
+#watermark {
+  position: absolute;
+  top: 18px;
+  left: 20px;
+  z-index: 10;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 12px;
+  color: rgba(0,220,220,.28);
+  pointer-events: none;
+  letter-spacing: .1em;
 }
 </style>
 </head>
@@ -322,18 +365,11 @@ h1{font-family:'Orbitron',sans-serif;font-size:106px;font-weight:500;letter-spac
 <section id="solar-system">
   <canvas id="solar-canvas"></canvas>
   <div id="watermark">WHERE SHALL WE GO?</div>
-  <button id="zoom-reset">⟲ RESET VIEW</button>
-  <div id="sol-controls">
-    <button id="btn-pause">⏸ PAUSE</button>
-    <span class="ctrl-sep">|</span>
-    <span class="ctrl-lbl">SPEED</span>
-    <div id="speed-wrap">
-      <input type="range" id="spd-slider" min="0" max="7" step="1" value="4">
-      <div id="spd-labels">
-        <span>0.05×</span><span>0.1×</span><span>0.25×</span><span>0.5×</span>
-        <span class="active">1×</span><span>2×</span><span>5×</span><span>10×</span>
-      </div>
-    </div>
+  
+  <div id="sol-controls-tr">
+    <button class="icon-btn" id="btn-scroll-up" title="Scroll Up">⇪</button>
+    <button class="icon-btn" id="btn-pause" title="Pause / Play">⏸</button>
+    <button class="icon-btn" id="zoom-reset" title="Reset View">⟲</button>
   </div>
 </section>
 </div>
@@ -443,22 +479,37 @@ h1{font-family:'Orbitron',sans-serif;font-size:106px;font-weight:500;letter-spac
       title = parts.slice(1).join(" - ").trim();
     }
 
+    // 1. Reset DOM states completely before measuring
     sTitle.textContent = title;
     aName.textContent = artist;
     sTitle.classList.remove('marquee');
     aName.classList.remove('marquee');
+    sTitle.style.removeProperty('--scroll-dist');
+    aName.style.removeProperty('--scroll-dist');
 
     setTimeout(() => {
       const vw20 = window.innerWidth * 0.2;
       const titleW = sTitle.scrollWidth;
+      
       if (titleW > vw20) {
+        // Create duplicate text with a 50px gap
+        sTitle.innerHTML = `<span>${title}</span><span style="padding-left: 50px;">${title}</span>`;
+        // Calculate exact scroll distance: width of text + width of gap
+        sTitle.style.setProperty('--scroll-dist', `-${titleW + 50}px`);
         sTitle.classList.add('marquee');
         setEqBars(5);
       } else {
         const n = Math.max(3, Math.min(12, Math.round(5 + (1 - titleW / vw20) * 7)));
         setEqBars(n);
       }
-      if (aName.scrollWidth > mWrap.clientWidth) aName.classList.add('marquee');
+      
+      const artistW = aName.scrollWidth;
+      if (artistW > mWrap.clientWidth) {
+         // Create duplicate for artist name
+         aName.innerHTML = `<span>${artist}</span><span style="padding-left: 50px;">${artist}</span>`;
+         aName.style.setProperty('--scroll-dist', `-${artistW + 50}px`);
+         aName.classList.add('marquee');
+      }
     }, 150);
   }
 
@@ -818,7 +869,6 @@ h1{font-family:'Orbitron',sans-serif;font-size:106px;font-weight:500;letter-spac
   const eqEl    = document.getElementById('eq-icon');
 
   // --- TILE ENGINE SETUP ---
-  // Create a canvas perfectly overlaid inside the grid to inherit its 3D transform
   const tileCanvas = document.createElement('canvas');
   tileCanvas.id = 'tile-canvas';
   tileCanvas.style.cssText = 'position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:1; mix-blend-mode: screen;';
@@ -828,23 +878,20 @@ h1{font-family:'Orbitron',sans-serif;font-size:106px;font-weight:500;letter-spac
   let cw = 0, ch = 0;
   function resizeGrid() {
     if (!gridEl || !tileCanvas) return;
-    // Canvas dimensions match the un-transformed CSS dimensions of the grid
     cw = tileCanvas.width = gridEl.clientWidth;
     ch = tileCanvas.height = gridEl.clientHeight;
   }
   window.addEventListener('resize', resizeGrid);
   resizeGrid();
 
-  // Take over the grid background animation manually for perfect pixel-sync with tiles
   if (gridEl) gridEl.style.animation = 'none';
   let gridTotalScrolled = 0;
 
   const tiles = [];
-  const colCooldown = new Array(150).fill(0); // Prevents overlap in columns
+  const colCooldown = new Array(150).fill(0);
   const palette = ['#00ffff', '#ff00cc', '#aa00ff', '#f5f000']; 
   let lastTs = null;
   let prevBass = 0;
-  // --- END TILE ENGINE SETUP ---
 
   // Smoothed values
   let sEnergy = 0, sBass = 0, sMid = 0, sHi = 0;
@@ -856,7 +903,6 @@ h1{font-family:'Orbitron',sans-serif;font-size:106px;font-weight:500;letter-spac
   function tick(ts) {
     requestAnimationFrame(tick);
     
-    // Calculate delta time for smooth scrolling across refresh rates
     if (lastTs === null) lastTs = ts;
     const dt = Math.min((ts - lastTs) / 1000, 0.1); 
     lastTs = ts;
@@ -918,8 +964,8 @@ h1{font-family:'Orbitron',sans-serif;font-size:106px;font-weight:500;letter-spac
     sMid    = lerp(sMid,    active ? mid    : 0, active ? 0.12 : 0.04);
     sHi     = lerp(sHi,     active ? hi     : 0, active ? 0.10 : 0.03);
 
-    // Grid reactivity variables
-    const alpha = Math.min(1.0, 0.28 + sBass * 1.2 + sMid * 0.35);
+    // Idle grid visibility raised for constant colors
+    const alpha = Math.min(1.0, 0.65 + sBass * 0.8 + sMid * 0.2);
     const spd   = Math.max(0.28, 1.0 - sEnergy * 0.85);
     const r = Math.round(160 + sHi * 80);
     const b = Math.round(255 - sBass * 60);
@@ -936,50 +982,47 @@ h1{font-family:'Orbitron',sans-serif;font-size:106px;font-weight:500;letter-spac
 
     // ── PIANO TILES SYNC & RENDER ──
     if (tctx && gridEl) {
-      // 1. Perfectly sync grid lines with tile speed
       const scrollStep = (60 / spd) * dt;
       gridTotalScrolled += scrollStep;
       const gridOffset = gridTotalScrolled % 60;
       gridEl.style.backgroundPosition = `0px ${gridOffset}px`;
 
-      // 2. Tile Spawning
+      // Spawning Phase
       const numCols = Math.floor(cw / 60);
       if (active && sEnergy > 0.12) {
-        // Spawn more heavily on hard bass hits
         let spawns = sBass > 0.6 ? 2 : (Math.random() < sEnergy * 0.4 ? 1 : 0);
         for (let i = 0; i < spawns; i++) {
            const c = Math.floor(Math.random() * numCols);
            if (colCooldown[c] <= 0) {
               tiles.push({
                 col: c,
-                y: gridOffset - 120, // Lock strictly to grid vertices
+                // FIX: Log exact scroll differential to permanently lock to vertices
+                spawnScroll: gridTotalScrolled,
+                initialY: gridOffset - 120,
+                y: gridOffset - 120,
                 color: palette[Math.floor(Math.random() * palette.length)],
                 state: 'falling',
                 opacity: 0,
                 pressGlow: 0
               });
-              // Ensure gap between tiles on the same column
               colCooldown[c] = 60 + Math.random() * 240; 
            }
         }
       }
 
-      // Cool down columns based on scroll speed
       for (let i = 0; i < colCooldown.length; i++) {
         if (colCooldown[i] > 0) colCooldown[i] -= scrollStep;
       }
 
-      // 3. Beat Detection
       const isBeat = (sBass > prevBass + 0.04 && sBass > 0.45) || (sEnergy > 0.7);
       prevBass = sBass;
 
-      // 4. Render Cycle
+      // Render Phase
       tctx.clearRect(0, 0, cw, ch);
       
-      const pressZone = ch * 0.68; // Virtual "hit line" position
-      const hitTolerance = ch * 0.20; // Forgiving hit box
+      const pressZone = ch * 0.68; 
+      const hitTolerance = ch * 0.20; 
 
-      // Draw subtle dashed "hit line" horizon
       if (active) {
           tctx.save();
           tctx.strokeStyle = `rgba(${r},255,${b}, 0.25)`;
@@ -992,24 +1035,23 @@ h1{font-family:'Orbitron',sans-serif;font-size:106px;font-weight:500;letter-spac
           tctx.restore();
       }
 
-      // Update and draw each tile
       for (let i = tiles.length - 1; i >= 0; i--) {
         const t = tiles[i];
 
         if (t.state === 'falling') {
-           t.y += scrollStep; // Move synchronously with grid background
+           // FIX: Calculate exact Y from anchor, zero drifting possible
+           t.y = t.initialY + (gridTotalScrolled - t.spawnScroll); 
            t.opacity = Math.min(1, t.opacity + dt * 3);
 
-           // Detect press on beat
            if (isBeat && Math.abs(t.y - pressZone) < hitTolerance) {
               t.state = 'pressed';
               t.pressGlow = 1.0;
            } else if (t.y > ch) {
-              tiles.splice(i, 1); // Culling off-screen tiles
+              tiles.splice(i, 1);
               continue;
            }
         } else if (t.state === 'pressed') {
-           t.y += scrollStep * 0.3; // Slight pause on impact
+           t.y += scrollStep * 0.3; 
            t.pressGlow -= dt * 2.5;
            t.opacity -= dt * 2;
            if (t.opacity <= 0 || t.pressGlow <= 0) {
@@ -1018,19 +1060,16 @@ h1{font-family:'Orbitron',sans-serif;font-size:106px;font-weight:500;letter-spac
            }
         }
 
-        // Calculate precise grid vertices
         tctx.save();
         const x = t.col * 60 + 1;
         const y = t.y + 1;
         const w = 58; 
         const h = 58;
 
-        // Smooth fade-in at the horizon top
         const horizonFade = Math.min(1, Math.max(0, (t.y + 100) / 250));
         tctx.globalAlpha = t.opacity * horizonFade;
 
         if (t.state === 'falling') {
-           // Idle falling tile (transparent fill, neon stroke)
            tctx.fillStyle = t.color;
            tctx.globalAlpha = t.opacity * horizonFade * 0.15;
            tctx.fillRect(x, y, w, h);
@@ -1045,7 +1084,6 @@ h1{font-family:'Orbitron',sans-serif;font-size:106px;font-weight:500;letter-spac
            tctx.strokeRect(x, y, w, h);
 
         } else if (t.state === 'pressed') {
-           // Pressed tile (bright white flash, heavy color glow, shrink effect)
            tctx.globalAlpha = t.opacity;
            tctx.fillStyle = '#ffffff';
            tctx.shadowColor = t.color;
@@ -1073,8 +1111,7 @@ resize();window.addEventListener('resize',resize);
 const sunImg=new Image();sunImg.src='Logo_Vaporwave.svg';
 
 /* ── Sim state ── */
-let simT=0,lastTs=null,paused=false,speedMult=1;
-const SPEEDS=[.05,.1,.25,.5,1,2,5,10];
+let simT=0,lastTs=null,paused=false,speedMult=0.05;
 
 /* ── View ── */
 const V={x:0,y:0,z:1,tx:0,ty:0,tz:1};
@@ -1754,7 +1791,7 @@ canvas.addEventListener('wheel',e=>{
   const nz=Math.min(18,Math.max(.2,V.tz*delta));
   const wx=(x-V.x-cx)/V.tz+cx,wy=(y-V.y-cy)/V.tz+cy;
   V.tx=x-cx-(wx-cx)*nz;V.ty=y-cy-(wy-cy)*nz;V.tz=nz;
-  selectedBody=null;resetBtn.style.display=nz!==1?'block':'none';
+  selectedBody=null;resetBtn.style.display=nz!==1?'flex':'none';
 },{passive:false});
 
 /* Drag */
@@ -1781,37 +1818,34 @@ window.addEventListener('mouseup',e=>{
     if(hit){
       const zl=hit.type==='moon'?10:hit.type==='dwarf'?4:5;
       V.tz=zl;V.tx=-(hit.wx-cx)*zl;V.ty=-(hit.wy-cy)*zl;
-      selectedBody=hit.name;resetBtn.style.display='block';
+      selectedBody=hit.name;resetBtn.style.display='flex';
     } else {selectedBody=null;}
   }
   drag.on=false;drag.moved=false;drag.fromCanvas=false;
   canvas.classList.remove('dragging');
 });
 
-resetBtn.addEventListener('click',()=>{V.tz=1;V.tx=0;V.ty=0;selectedBody=null;resetBtn.style.display='none';});
+resetBtn.addEventListener('click',()=>{V.tz=1;V.tx=0;V.ty=0;selectedBody=null;resetBtn.style.display='flex';});
 
-/* Pause & Speed – do NOT clear selectedBody */
-const pauseBtn=document.getElementById('btn-pause');
-pauseBtn.addEventListener('mousedown',e=>e.stopPropagation());
-pauseBtn.addEventListener('click',e=>{
-  e.stopPropagation();paused=!paused;
-  pauseBtn.textContent=paused?'▶ RESUME':'⏸ PAUSE';pauseBtn.classList.toggle('paused',paused);
+/* Top Right Controls – do NOT clear selectedBody */
+const pauseBtn = document.getElementById('btn-pause');
+pauseBtn.addEventListener('mousedown', e => e.stopPropagation());
+pauseBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  paused = !paused;
+  pauseBtn.textContent = paused ? '▶' : '⏸';
+  pauseBtn.classList.toggle('paused', paused);
 });
 
-const slider=document.getElementById('spd-slider');
-const sLabels=document.querySelectorAll('#spd-labels span');
-function setSpeed(idx){
-  speedMult=SPEEDS[idx];slider.value=idx;
-  sLabels.forEach((s,i)=>s.classList.toggle('active',i===idx));
-  if(paused){paused=false;pauseBtn.textContent='⏸ PAUSE';pauseBtn.classList.remove('paused');}
-}
-slider.addEventListener('mousedown',e=>e.stopPropagation());
-slider.addEventListener('input',e=>{e.stopPropagation();setSpeed(parseInt(slider.value));});
-sLabels.forEach((s,i)=>{
-  s.addEventListener('mousedown',e=>e.stopPropagation());
-  s.addEventListener('click',e=>{e.stopPropagation();setSpeed(i);});
+const scrollUpBtn = document.getElementById('btn-scroll-up');
+scrollUpBtn.addEventListener('mousedown', e => e.stopPropagation());
+scrollUpBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  // Smooth scroll back to the hero section
+  document.getElementById('scroll-wrap').scrollTo({ top: 0, behavior: 'smooth' });
 });
-document.getElementById('sol-controls').addEventListener('mousedown',e=>e.stopPropagation());
+
+document.getElementById('sol-controls-tr').addEventListener('mousedown', e => e.stopPropagation());
 
 /* Touch */
 let touches={},pinchD=null;
